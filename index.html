@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NetBill Pro — Portal Manajemen Usaha WiFi</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+    .tab-active { background: #2563eb; color: #ffffff; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25); }
+    @media print { .no-print { display: none !important; } }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+
+  <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+  <div id="modal-overlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 hidden items-center justify-center p-4 overflow-y-auto">
+    <div id="modal-box" class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 relative max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+        <h3 id="modal-title" class="text-lg font-bold text-slate-900">Modal</h3>
+        <button id="modal-close-btn" type="button" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div id="modal-content"></div>
+    </div>
+  </div>
+
+  <!-- ================= LOGIN KLIEN & SALES ================= -->
+  <section id="login-view" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950">
+    <div class="max-w-md w-full bg-white rounded-3xl shadow-2xl p-6 sm:p-8 border border-slate-100 space-y-6">
+      <div class="text-center">
+        <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/30 mb-3">
+          <i data-lucide="wifi" class="w-7 h-7"></i>
+        </div>
+        <h1 id="brand-title-login" class="text-2xl font-extrabold text-slate-900 tracking-tight">NetBill Pro</h1>
+        <p class="text-xs sm:text-sm text-slate-500 mt-1">Portal Billing WiFi, FTTH &amp; Notifikasi Telegram</p>
+      </div>
+
+      <form id="login-form" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Username</label>
+          <input id="login-username" type="text" required placeholder="Masukkan username Anda" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Password</label>
+          <input id="login-password" type="password" required placeholder="Masukkan password" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+        </div>
+        <button type="submit" class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm shadow-lg shadow-blue-600/25 transition flex items-center justify-center gap-2">
+          <i data-lucide="log-in" class="w-4 h-4"></i> Masuk ke Dashboard
+        </button>
+      </form>
+
+      <div class="rounded-2xl bg-slate-50 border border-slate-200 p-3.5 space-y-2">
+        <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wider text-center">Demo Cepat Klien (1-Klik)</p>
+        <div class="grid grid-cols-2 gap-2 text-[11px]">
+          <button type="button" data-demo-user="admin_melati" data-demo-pass="melati123" class="btn-demo-fill py-2 px-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold transition">Admin Usaha WiFi</button>
+          <button type="button" data-demo-user="sales_budi" data-demo-pass="sales123" class="btn-demo-fill py-2 px-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold transition">Tim Sales / Teknisi</button>
+        </div>
+      </div>
+
+      <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+        <a href="cek-tagihan.html" class="text-blue-600 hover:underline font-semibold">Portal Cek Tagihan Pelanggan</a>
+        <span>Versi Web Mandiri</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SUSPENDED SCREEN ================= -->
+  <section id="suspended-view" class="hidden min-h-screen flex items-center justify-center p-4 bg-slate-900">
+    <div class="max-w-md w-full bg-white rounded-3xl shadow-2xl p-7 text-center space-y-4">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-rose-100 text-rose-600">
+        <i data-lucide="lock" class="w-8 h-8"></i>
+      </div>
+      <h2 class="text-xl font-extrabold text-slate-900">Masa Sewa Sistem Berakhir</h2>
+      <p id="suspended-reason" class="text-xs sm:text-sm text-slate-500">Akses proyek Anda sedang dikunci. Silakan hubungi penyedia sistem untuk perpanjangan.</p>
+      <button id="btn-suspended-logout" type="button" class="w-full py-2.5 rounded-xl bg-slate-900 text-white text-xs font-semibold">Kembali ke Halaman Login</button>
+    </div>
+  </section>
+
+  <!-- ================= CLIENT APP SHELL ================= -->
+  <div id="app-shell" class="hidden min-h-screen flex flex-col">
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 no-print">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+            <i data-lucide="router" class="w-5 h-5"></i>
+          </div>
+          <div class="min-w-0">
+            <h1 id="tenant-brand-header" class="font-bold text-slate-900 text-sm sm:text-base truncate">WiFi Jaringan</h1>
+            <p id="header-user-badge" class="text-xs text-slate-500 truncate">Role: -</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 sm:gap-3">
+          <span id="tenant-license-pill" class="hidden md:inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-semibold">
+            Aktif s.d -
+          </span>
+          <button id="btn-logout" type="button" class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold flex items-center gap-1.5 transition">
+            <i data-lucide="log-out" class="w-4 h-4"></i>
+            <span class="hidden sm:inline">Keluar</span>
+          </button>
+        </div>
+      </div>
+
+      <nav class="max-w-7xl mx-auto px-4 sm:px-6 pb-3 flex items-center gap-1.5 overflow-x-auto" id="main-nav-tabs"></nav>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
+
+      <!-- TAB 1: DASHBOARD -->
+      <section id="tab-dashboard" class="app-tab space-y-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="kpi-cards-grid"></div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+              <div>
+                <h2 class="font-bold text-slate-900 text-base">Grafik Pemasukan vs Pengeluaran</h2>
+                <p class="text-xs text-slate-500">Rekapitulasi keuangan jaringan Anda</p>
+              </div>
+              <button id="btn-send-tg-summary" type="button" class="px-3 py-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-700 text-xs font-semibold flex items-center gap-1.5 self-start sm:self-auto">
+                <i data-lucide="send" class="w-3.5 h-3.5"></i> Kirim Rekap ke Telegram
+              </button>
+            </div>
+            <div class="relative h-72"><canvas id="revenueChart"></canvas></div>
+          </div>
+          <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="font-bold text-slate-900 text-base">Siap Tagih (H-3 &amp; Telat)</h2>
+              <span class="px-2 py-0.5 rounded-md bg-rose-50 text-rose-600 text-xs font-semibold">WA 1-Klik</span>
+            </div>
+            <div id="due-soon-list" class="space-y-2.5 flex-1 overflow-y-auto max-h-72"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: PELANGGAN, FTTH & QR -->
+      <section id="tab-sales" class="app-tab hidden space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm">
+            <h2 class="font-bold text-slate-900 text-base mb-1">Input Pelanggan Baru</h2>
+            <p class="text-xs text-slate-500 mb-4">Otomatis kirim notifikasi ke Bot Telegram Admin jika diaktifkan</p>
+            <form id="sales-customer-form" class="space-y-3">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <input id="sc-nama" type="text" required placeholder="Nama Pelanggan *" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none" />
+                <input id="sc-wa" type="tel" placeholder="No. WhatsApp (628...)" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none" />
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <select id="sc-paket" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white outline-none"></select>
+                <input id="sc-harga" type="number" required value="150000" placeholder="Harga" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs outline-none" />
+                <input id="sc-kecepatan" type="text" required value="10 Mbps" placeholder="Kecepatan" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs outline-none" />
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div><label class="text-[11px] text-slate-500">Tgl Bayar</label><input id="sc-tgl-bayar" type="date" required class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs outline-none" /></div>
+                <div><label class="text-[11px] text-slate-500">Jatuh Tempo</label><input id="sc-jatuh-tempo" type="date" required class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs outline-none" /></div>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <input id="sc-sales" type="text" required placeholder="Nama Sales *" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs outline-none" />
+                <input id="sc-teknisi" type="text" required placeholder="Nama Teknisi *" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs outline-none" />
+              </div>
+              <div>
+                <div class="flex justify-between mb-1"><span class="text-xs font-semibold text-slate-600">Tikor ODP &amp; Port</span><button type="button" id="btn-gps-odp" class="text-xs text-blue-600 font-semibold">Ambil GPS ODP</button></div>
+                <div class="grid grid-cols-2 gap-2">
+                  <input id="sc-odp-port" type="text" required placeholder="ODP-04 / Port 2" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs outline-none" />
+                  <input id="sc-tikor-odp" type="text" required placeholder="1.474830, 124.842079" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs outline-none" />
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between mb-1"><span class="text-xs font-semibold text-slate-600">Tikor Rumah</span><button type="button" id="btn-gps-rumah" class="text-xs text-emerald-600 font-semibold">Ambil GPS Rumah</button></div>
+                <input id="sc-tikor-rumah" type="text" required placeholder="1.474830, 124.842079" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs outline-none" />
+              </div>
+              <div class="grid grid-cols-3 gap-2">
+                <input id="sc-sn" type="text" placeholder="SN ONT" class="px-2.5 py-2 rounded-xl border border-slate-200 text-xs outline-none" />
+                <input id="sc-redaman" type="text" placeholder="-19 dBm" class="px-2.5 py-2 rounded-xl border border-slate-200 text-xs outline-none" />
+                <input id="sc-kabel" type="number" placeholder="Kabel (m)" class="px-2.5 py-2 rounded-xl border border-slate-200 text-xs outline-none" />
+              </div>
+              <button type="submit" class="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition">+ Simpan Pelanggan</button>
+            </form>
+          </div>
+
+          <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm flex flex-col">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <div>
+                <h2 class="font-bold text-slate-900 text-base">Daftar Pelanggan &amp; Stiker QR</h2>
+                <p class="text-xs text-slate-500">Edit, hapus, atau cetak stiker QR Code untuk ditempel di modem</p>
+              </div>
+              <input id="sales-search" type="search" placeholder="Cari pelanggan / ODP / SN..." class="px-3.5 py-2 rounded-xl border border-slate-200 text-xs w-full sm:w-56 outline-none" />
+            </div>
+            <div class="overflow-x-auto flex-1">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr class="border-b border-slate-200 text-slate-500 uppercase">
+                    <th class="py-2.5 px-3">Pelanggan</th>
+                    <th class="py-2.5 px-3">Paket &amp; Harga</th>
+                    <th class="py-2.5 px-3">Teknis FTTH</th>
+                    <th class="py-2.5 px-3">ODP &amp; Tikor</th>
+                    <th class="py-2.5 px-3 text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="sales-customer-tbody" class="divide-y divide-slate-100"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: TAGIHAN & PENGELUARAN -->
+      <section id="tab-billing" class="app-tab hidden space-y-6">
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+            <div>
+              <h2 class="font-bold text-slate-900 text-lg">Tagihan &amp; Pembayaran Pelanggan</h2>
+              <p class="text-xs text-slate-500">Struk, pesan WA, &amp; notifikasi Telegram otomatis memakai profil usaha Anda</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <input id="billing-search" type="search" placeholder="Cari nama..." class="px-3 py-2 rounded-xl border border-slate-200 text-xs outline-none w-36 sm:w-44" />
+              <select id="billing-filter-status" class="px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white outline-none">
+                <option value="ALL">Semua Status</option>
+                <option value="H_MINUS_3">Segera Jatuh Tempo (H-3)</option>
+                <option value="JATUH_TEMPO">Sudah Jatuh Tempo</option>
+                <option value="LUNAS">Lunas</option>
+              </select>
+              <button id="btn-export-csv" type="button" class="px-3.5 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold">Export CSV</button>
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-50 border-y border-slate-200 text-slate-600 uppercase">
+                  <th class="py-3 px-3">Nama Pelanggan</th>
+                  <th class="py-3 px-3">Paket</th>
+                  <th class="py-3 px-3 text-right">Tagihan</th>
+                  <th class="py-3 px-3">Jatuh Tempo</th>
+                  <th class="py-3 px-3">Status</th>
+                  <th class="py-3 px-3 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="billing-tbody" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+            <h3 class="font-bold text-slate-900 text-base mb-3">Catat Pengeluaran &amp; Komisi</h3>
+            <form id="expense-form" class="space-y-3">
+              <input id="exp-title" type="text" required placeholder="Keterangan biaya / komisi" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs outline-none" />
+              <div class="grid grid-cols-2 gap-2">
+                <select id="exp-cat" class="px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white outline-none">
+                  <option value="Bandwidth ISP">Bandwidth ISP</option>
+                  <option value="Komisi Sales/Teknisi">Komisi Sales/Teknisi</option>
+                  <option value="Alat & Kabel">Alat &amp; Kabel</option>
+                  <option value="Listrik & Sewa">Listrik &amp; Sewa</option>
+                </select>
+                <input id="exp-amount" type="number" min="1" required placeholder="Nominal (Rp)" class="px-3 py-2 rounded-xl border border-slate-200 text-xs outline-none" />
+              </div>
+              <input id="exp-date" type="date" required class="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs outline-none" />
+              <button type="submit" class="w-full py-2 rounded-xl bg-rose-600 text-white text-xs font-semibold">+ Simpan Pengeluaran</button>
+            </form>
+          </div>
+          <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+            <div class="flex justify-between mb-3"><h3 class="font-bold text-slate-900 text-base">Riwayat Pengeluaran</h3><span id="exp-total-badge" class="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 text-xs font-bold">Rp 0</span></div>
+            <div id="expense-list" class="space-y-2 max-h-56 overflow-y-auto"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: PETA ODP & AP -->
+      <section id="tab-map-ap" class="app-tab hidden space-y-6">
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div><h2 class="font-bold text-slate-900 text-base">Peta Sebaran ODP, Access Point &amp; Rumah</h2></div>
+            <div class="flex items-center gap-3 text-[11px] font-semibold">
+              <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-blue-600 inline-block"></span> ODP</span>
+              <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-emerald-600 inline-block"></span> Pelanggan</span>
+              <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-amber-500 inline-block"></span> Access Point</span>
+            </div>
+          </div>
+          <div id="network-map" class="w-full h-80 rounded-2xl border border-slate-200 z-10"></div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+            <h3 class="font-bold text-slate-900 text-base mb-3">Input IP Access Point</h3>
+            <form id="ap-form" class="space-y-3">
+              <div class="grid grid-cols-2 gap-2">
+                <input id="ap-name" type="text" required placeholder="Nama AP" class="px-3 py-2 rounded-xl border border-slate-200 text-xs outline-none" />
+                <input id="ap-ip" type="text" required placeholder="IP Address" class="px-3 py-2 rounded-xl border border-slate-200 text-xs outline-none" />
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <input id="ap-ssid" type="text" required placeholder="SSID / Frekuensi" class="px-3 py-2 rounded-xl border border-slate-200 text-xs outline-none" />
+                <select id="ap-status" class="px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white outline-none">
+                  <option value="ONLINE">Online</option>
+                  <option value="MAINTENANCE">Maintenance</option>
+                  <option value="OFFLINE">Offline</option>
+                </select>
+              </div>
+              <div class="flex gap-2">
+                <input id="ap-tikor" type="text" required placeholder="Koordinat" class="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-xs outline-none" />
+                <button type="button" id="btn-gps-ap" class="px-3 py-2 rounded-xl bg-amber-50 text-amber-700 text-xs font-semibold">GPS</button>
+              </div>
+              <button type="submit" class="w-full py-2.5 rounded-xl bg-blue-600 text-white text-xs font-semibold">+ Simpan AP</button>
+            </form>
+          </div>
+          <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+            <h3 class="font-bold text-slate-900 text-base">Daftar Access Point &amp; Port ODP</h3>
+            <div id="ap-list-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+            <div class="pt-3 border-t border-slate-100">
+              <p class="text-xs font-bold text-slate-700 mb-2">Kapasitas Port ODP</p>
+              <div id="odp-capacity-list" class="flex flex-wrap gap-2"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: FOTO, VOUCHER & TIKET -->
+      <section id="tab-ops" class="app-tab hidden space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm">
+            <h2 class="font-bold text-slate-900 text-base mb-4">Input Foto, Voucher / PPPoE</h2>
+            <form id="ops-form" class="space-y-3">
+              <input id="ops-atas-nama" type="text" required placeholder="Atas Nama Siapa *" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none" />
+              <div class="grid grid-cols-2 gap-2">
+                <input id="ops-lokasi" type="text" required placeholder="Lokasi *" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none" />
+                <input id="ops-jatuh-tempo" type="date" required class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none" />
+              </div>
+              <div class="grid grid-cols-3 gap-2">
+                <select id="ops-jenis" class="px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white outline-none">
+                  <option value="Voucher Hotspot">Voucher</option>
+                  <option value="PPPoE">PPPoE</option>
+                  <option value="Voucher + PPPoE">Voucher + PPPoE</option>
+                </select>
+                <input id="ops-jumlah" type="number" min="1" required value="50" class="px-3 py-2 rounded-xl border border-slate-200 text-xs outline-none" />
+                <input id="ops-nominal" type="number" min="0" value="250000" class="px-3 py-2 rounded-xl border border-slate-200 text-xs outline-none" />
+              </div>
+              <div>
+                <input id="ops-foto" type="file" accept="image/*" class="w-full text-xs text-slate-500 border border-slate-200 rounded-xl p-1.5" />
+                <div id="ops-foto-preview-wrap" class="hidden mt-2"><img id="ops-foto-preview" src="" alt="Preview" class="h-24 rounded-xl object-cover" /></div>
+              </div>
+              <button type="submit" class="w-full py-2.5 rounded-xl bg-emerald-600 text-white font-semibold text-sm">+ Simpan Data &amp; Foto</button>
+            </form>
+          </div>
+          <div class="lg:col-span-7 space-y-6">
+            <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+              <div class="flex justify-between mb-3"><h2 class="font-bold text-slate-900 text-base">Daftar Voucher, PPPoE &amp; Foto</h2><span id="ops-total-badge" class="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-semibold">0 Entri</span></div>
+              <div id="ops-cards-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+            </div>
+            <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
+              <div class="flex justify-between items-center"><h2 class="font-bold text-slate-900 text-base">Tiket Gangguan Teknisi</h2><button id="btn-add-ticket" type="button" class="px-3 py-1.5 rounded-xl bg-amber-50 text-amber-700 text-xs font-semibold">+ Buat Tiket</button></div>
+              <div id="tickets-list" class="space-y-2"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 6: PENGATURAN USAHA, PAKET & TELEGRAM -->
+      <section id="tab-tenant-settings" class="app-tab hidden space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm space-y-4">
+            <div>
+              <h2 class="font-bold text-slate-900 text-base">Profil Usaha &amp; Notifikasi Bot Telegram</h2>
+              <p class="text-xs text-slate-500">Notifikasi langsung dikirim dari website ke Bot Telegram Anda tanpa perlu server tambahan.</p>
+            </div>
+            <form id="tenant-profile-form" class="space-y-3 text-xs">
+              <div><label class="block font-semibold text-slate-600 mb-1">Nama Usaha WiFi Anda (tampil di struk &amp; WA)</label><input id="tp-brand" type="text" required class="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none" /></div>
+              <div class="grid grid-cols-2 gap-2">
+                <div><label class="block font-semibold text-slate-600 mb-1">No. WhatsApp Admin</label><input id="tp-wa" type="tel" placeholder="62812..." class="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none" /></div>
+                <div><label class="block font-semibold text-slate-600 mb-1">Info Rekening / QRIS</label><input id="tp-rek" type="text" placeholder="BRI 123456 a.n. Budi" class="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none" /></div>
+              </div>
+              <div>
+                <label class="block font-semibold text-slate-600 mb-1">URL Halaman Cek Tagihan (untuk QR Code Modem)</label>
+                <input id="tp-portal" type="text" placeholder="https://domainanda.com/cek-tagihan.html" class="w-full px-3 py-2 rounded-xl border border-slate-200 outline-none" />
+              </div>
+              <div class="rounded-xl bg-sky-50 border border-sky-200 p-3 space-y-2.5">
+                <p class="font-bold text-sky-900">Bot Telegram Langsung (Tanpa GAS)</p>
+                <div class="grid grid-cols-2 gap-2">
+                  <div><label class="block font-semibold text-slate-600 mb-1">Bot Token (@BotFather)</label><input id="tp-tg-token" type="text" placeholder="123456:ABC..." class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white outline-none" /></div>
+                  <div><label class="block font-semibold text-slate-600 mb-1">Chat ID Admin</label><input id="tp-tg-chat" type="text" placeholder="987654321" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white outline-none" /></div>
+                </div>
+                <div class="flex flex-wrap gap-3 text-[11px] text-slate-700 pt-1">
+                  <label class="flex items-center gap-1.5"><input id="tp-tg-new" type="checkbox" checked /> Notif Pelanggan Baru</label>
+                  <label class="flex items-center gap-1.5"><input id="tp-tg-pay" type="checkbox" checked /> Notif Pembayaran</label>
+                  <label class="flex items-center gap-1.5"><input id="tp-tg-tkt" type="checkbox" checked /> Notif Gangguan</label>
+                </div>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <button type="submit" class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold">Simpan Pengaturan</button>
+                <button type="button" id="btn-test-tg-tenant" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold">Tes Telegram</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="space-y-6">
+            <div class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm space-y-4">
+              <div>
+                <h2 class="font-bold text-slate-900 text-base">Kelola Paket WiFi Custom</h2>
+                <p class="text-xs text-slate-500">Paket di sini otomatis muncul pada pilihan form Input Pelanggan</p>
+              </div>
+              <form id="tenant-package-form" class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                <input id="pkg-name" type="text" required placeholder="Nama Paket (mis. 30M)" class="px-3 py-2 rounded-xl border border-slate-200 outline-none" />
+                <input id="pkg-harga" type="number" min="1000" required placeholder="Harga (Rp)" class="px-3 py-2 rounded-xl border border-slate-200 outline-none" />
+                <input id="pkg-speed" type="text" required placeholder="Kecepatan (30 Mbps)" class="px-3 py-2 rounded-xl border border-slate-200 outline-none" />
+                <button type="submit" class="sm:col-span-3 py-2 rounded-xl bg-blue-600 text-white font-semibold">+ Tambah Paket WiFi</button>
+              </form>
+              <div id="tenant-package-list" class="space-y-2 max-h-40 overflow-y-auto"></div>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm space-y-4">
+              <div>
+                <h2 class="font-bold text-slate-900 text-base">Tim Sales &amp; Backup Data</h2>
+                <p class="text-xs text-slate-500">Kelola akun sales serta backup/restore data antar perangkat</p>
+              </div>
+              <form id="tenant-team-form" class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                <input id="tt-user" type="text" required placeholder="Username" class="px-3 py-2 rounded-xl border border-slate-200 outline-none" />
+                <input id="tt-pass" type="text" required placeholder="Password" class="px-3 py-2 rounded-xl border border-slate-200 outline-none" />
+                <input id="tt-name" type="text" required placeholder="Nama Sales/Teknisi" class="px-3 py-2 rounded-xl border border-slate-200 outline-none" />
+                <button type="submit" class="sm:col-span-3 py-2 rounded-xl bg-slate-900 text-white font-semibold">+ Tambah Akun Sales</button>
+              </form>
+              <div id="tenant-team-list" class="space-y-2 max-h-40 overflow-y-auto"></div>
+              <div class="pt-3 border-t border-slate-100 flex flex-wrap gap-2 text-xs">
+                <button id="btn-backup-json" type="button" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold">Download Backup JSON</button>
+                <label class="px-3 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 font-semibold cursor-pointer">
+                  Restore JSON <input id="input-restore-json" type="file" accept=".json" class="hidden" />
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script>
+    const MASTER_KEY = 'netbill_saas_master_v6';
+    const SESSION_KEY = 'netbill_client_session_v6';
+
+    const defaultMaster = {
+      platformName: 'NetBill Pro Platform',
+      tenants: [
+        {
+          id: 'PRJ-01', name: 'Cluster Melati FTTH', owner: 'Pak Rahmat', wa: '6281234567800',
+          plan: 'Pro', price: 100000, expiredAt: '2027-12-31', active: true,
+          rekening: 'BRI 1234-5678-90 a.n. Pak Rahmat', portalUrl: 'cek-tagihan.html',
+          tgToken: '', tgChatId: '', tgNotifyNew: true, tgNotifyPay: true, tgNotifyTicket: true
+        }
+      ],
+      users: [
+        { id: 'USR-2', username: 'admin_melati', pass: 'melati123', fullName: 'Pak Rahmat (Admin Melati)', role: 'ADMIN_PROJEK', projectId: 'PRJ-01' },
+        { id: 'USR-3', username: 'sales_budi', pass: 'sales123', fullName: 'Budi Santoso (Sales)', role: 'SALES', projectId: 'PRJ-01' }
+      ]
+    };
+
+    const defaultTenantData = {
+      packages: [
+        { id: 'PKG-1', name: 'Paket Hemat 10M', harga: 150000, kecepatan: '10 Mbps' },
+        { id: 'PKG-2', name: 'Paket Keluarga 20M', harga: 200000, kecepatan: '20 Mbps' },
+        { id: 'PKG-3', name: 'Paket Bisnis 50M', harga: 350000, kecepatan: '50 Mbps' }
+      ],
+      customers: [
+        {
+          id: 'CUS-101', nama: 'Bpk. Ahmad Fauzi', wa: '6281234567801',
+          paket: 'Paket Keluarga 20M', harga: 200000, kecepatan: '20 Mbps',
+          tglBayar: '2026-11-05', jatuhTempo: '2026-12-05',
+          sales: 'Budi Santoso', teknisi: 'Teknisi Andi',
+          odpPort: 'ODP-MLT-02 / Port 4', tikorOdp: '1.474830, 124.842079',
+          tikorRumah: '1.475120, 124.842450', sn: 'ZTEG9981A', redaman: '-18 dBm', kabel: 110, status: 'LUNAS'
+        },
+        {
+          id: 'CUS-102', nama: 'Ibu Dewi Lestari', wa: '6281234567802',
+          paket: 'Paket Hemat 10M', harga: 150000, kecepatan: '10 Mbps',
+          tglBayar: '2026-10-20', jatuhTempo: '2026-11-20',
+          sales: 'Budi Santoso', teknisi: 'Teknisi Rizky',
+          odpPort: 'ODP-MLT-01 / Port 7', tikorOdp: '1.474110, 124.841500',
+          tikorRumah: '1.474390, 124.841820', sn: 'HWTC4412B', redaman: '-21 dBm', kabel: 85, status: 'JATUH_TEMPO'
+        }
+      ],
+      opsRecords: [
+        { id: 'OPS-201', atasNama: 'Pos Ronda RT 03', lokasi: 'Jl. Melati Blok B', jatuhTempo: '2026-11-28', jenis: 'Voucher Hotspot', jumlah: 100, nominal: 400000, fotoData: '' }
+      ],
+      expenses: [
+        { id: 'EXP-1', title: 'Bandwidth ISP Pusat', category: 'Bandwidth ISP', amount: 150000, date: '2026-11-01' }
+      ],
+      accessPoints: [
+        { id: 'AP-1', name: 'AP-Tower-Melati', ip: '192.168.10.2', ssid: 'Melati_5GHz', status: 'ONLINE', tikor: '1.474950, 124.842200' }
+      ],
+      tickets: [
+        { id: 'TKT-1', customer: 'Ibu Dewi Lestari', issue: 'Lampu LOS Merah', teknisi: 'Teknisi Rizky', status: 'PROSES' }
+      ]
+    };
+
+    let master = loadMaster();
+    let currentUser = loadSession();
+    let tenantData = null;
+    let activeTenant = null;
+    let revenueChartInstance = null;
+    let leafletMap = null;
+    let mapLayerGroup = null;
+
+    function loadMaster() {
+      try {
+        const raw = localStorage.getItem(MASTER_KEY);
+        if (raw) return { ...defaultMaster, ...JSON.parse(raw) };
+      } catch (e) {}
+      return JSON.parse(JSON.stringify(defaultMaster));
+    }
+
+    function saveMaster() {
+      try { localStorage.setItem(MASTER_KEY, JSON.stringify(master)); } catch (e) {}
+    }
+
+    function loadSession() {
+      try {
+        const raw = localStorage.getItem(SESSION_KEY);
+        return raw ? JSON.parse(raw) : null;
+      } catch (e) { return null; }
+    }
+
+    function saveSession(user) {
+      try {
+        if (user) localStorage.setItem(SESSION_KEY, JSON.stringify(user));
+        else localStorage.removeItem(SESSION_KEY);
+      } catch (e) {}
+    }
+
+    function loadTenantData(tenantId) {
+      try {
+        const raw = localStorage.getItem('netbill_tenant_db_' + tenantId);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          return {
+            ...JSON.parse(JSON.stringify(defaultTenantData)),
+            ...parsed,
+            packages: (parsed.packages && parsed.packages.length) ? parsed.packages : JSON.parse(JSON.stringify(defaultTenantData.packages))
+          };
+        }
+      } catch (e) {}
+      return JSON.parse(JSON.stringify(defaultTenantData));
+    }
+
+    function saveTenantData() {
+      if (!activeTenant) return;
+      try { localStorage.setItem('netbill_tenant_db_' + activeTenant.id, JSON.stringify(tenantData)); } catch (e) {}
+    }
+
+    function formatRupiah(num) { return 'Rp ' + Number(num || 0).toLocaleString('id-ID'); }
+
+    function escapeHtml(str) {
+      return String(str == null ? '' : str)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function showToast(msg, type = 'info') {
+      const colors = { success: 'bg-emerald-600 text-white', error: 'bg-rose-600 text-white', info: 'bg-slate-900 text-white', warning: 'bg-amber-500 text-white' };
+      const el = document.createElement('div');
+      el.className = `pointer-events-auto px-4 py-3 rounded-xl shadow-lg text-xs font-semibold ${colors[type] || colors.info}`;
+      el.textContent = msg;
+      document.getElementById('toast-container').appendChild(el);
+      setTimeout(() => el.remove(), 3500);
+    }
+
+    function openModal(title, htmlContent) {
+      document.getElementById('modal-title').textContent = title;
+      document.getElementById('modal-content').innerHTML = htmlContent;
+      const overlay = document.getElementById('modal-overlay');
+      overlay.classList.remove('hidden'); overlay.classList.add('flex');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closeModal() {
+      const overlay = document.getElementById('modal-overlay');
+      overlay.classList.add('hidden'); overlay.classList.remove('flex');
+    }
+
+    async function sendTelegramDirect(text) {
+      if (!activeTenant || !activeTenant.tgToken || !activeTenant.tgChatId) return false;
+      try {
+        const res = await fetch(`https://api.telegram.org/bot${activeTenant.tgToken}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: activeTenant.tgChatId, text, parse_mode: 'Markdown' })
+        });
+        return res.ok;
+      } catch (err) { return false; }
+    }
+
+    function addMonths(dateStr, months) {
+      const d = dateStr ? new Date(dateStr) : new Date();
+      if (isNaN(d.getTime())) return new Date().toISOString().split('T')[0];
+      d.setMonth(d.getMonth() + months);
+      return d.toISOString().split('T')[0];
+    }
+
+    function daysUntil(dateStr) {
+      if (!dateStr) return 999;
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const target = new Date(dateStr); target.setHours(0, 0, 0, 0);
+      return Math.round((target - today) / (1000 * 60 * 60 * 24));
+    }
+
+    function performLogin(username, pass) {
+      master = loadMaster();
+      const found = master.users.find(u => u.username.toLowerCase() === username.trim().toLowerCase() && u.pass === pass);
+      if (!found) return showToast('Username atau password salah!', 'error');
+
+      const tenant = master.tenants.find(t => t.id === found.projectId);
+      const today = new Date().toISOString().split('T')[0];
+      if (!tenant || !tenant.active || (tenant.expiredAt && tenant.expiredAt < today)) {
+        document.getElementById('login-view').classList.add('hidden');
+        document.getElementById('suspended-view').classList.remove('hidden');
+        document.getElementById('suspended-reason').textContent = tenant
+          ? `Akses "${tenant.name}" dikunci atau masa sewa berakhir pada ${tenant.expiredAt}. Hubungi penyedia sistem.`
+          : 'Akun usaha tidak ditemukan.';
+        return;
+      }
+
+      currentUser = found;
+      saveSession(found);
+      enterTenantApp(tenant, found);
+      showToast(`Selamat datang di ${tenant.name}!`, 'success');
+    }
+
+    function enterTenantApp(tenant, user) {
+      activeTenant = tenant;
+      tenantData = loadTenantData(tenant.id);
+
+      document.getElementById('login-view').classList.add('hidden');
+      document.getElementById('app-shell').classList.remove('hidden');
+
+      document.getElementById('tenant-brand-header').textContent = tenant.name;
+      document.getElementById('tenant-license-pill').textContent = `Aktif s.d ${tenant.expiredAt}`;
+      document.getElementById('header-user-badge').textContent = `${user.fullName} • ${user.role === 'ADMIN_PROJEK' ? 'Admin Jaringan' : 'Sales / Teknisi'}`;
+
+      const tabs = user.role === 'ADMIN_PROJEK' ? [
+        { id: 'dashboard', label: 'Dashboard & Laba', icon: 'layout-dashboard' },
+        { id: 'sales', label: 'Pelanggan & QR', icon: 'users' },
+        { id: 'billing', label: 'Tagihan & Biaya', icon: 'receipt' },
+        { id: 'map-ap', label: 'Peta ODP & AP', icon: 'map' },
+        { id: 'ops', label: 'Foto, Voucher & Tiket', icon: 'ticket' },
+        { id: 'tenant-settings', label: 'Pengaturan & Bot', icon: 'settings' }
+      ] : [
+        { id: 'sales', label: 'Input Sales & FTTH', icon: 'user-plus' },
+        { id: 'map-ap', label: 'Cek Peta ODP', icon: 'map' },
+        { id: 'billing', label: 'Cek Jatuh Tempo', icon: 'receipt' }
+      ];
+
+      document.getElementById('main-nav-tabs').innerHTML = tabs.map((t, idx) => `
+        <button type="button" data-tab="${t.id}" class="nav-tab-btn px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap transition ${idx === 0 ? 'tab-active' : 'text-slate-600 hover:bg-slate-100'}">
+          <i data-lucide="${t.icon}" class="w-4 h-4"></i><span>${t.label}</span>
+        </button>
+      `).join('');
+
+      document.querySelectorAll('.nav-tab-btn').forEach(btn => btn.addEventListener('click', () => switchTenantTab(btn.dataset.tab)));
+
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('sc-tgl-bayar').value = today;
+      document.getElementById('sc-jatuh-tempo').value = addMonths(today, 1);
+      document.getElementById('sc-sales').value = user.fullName;
+      document.getElementById('ops-jatuh-tempo').value = addMonths(today, 1);
+      document.getElementById('exp-date').value = today;
+
+      switchTenantTab(tabs[0].id);
+    }
+
+    function switchTenantTab(tabId) {
+      document.querySelectorAll('.app-tab').forEach(sec => sec.classList.add('hidden'));
+      const target = document.getElementById(`tab-${tabId}`);
+      if (target) target.classList.remove('hidden');
+
+      document.querySelectorAll('.nav-tab-btn').forEach(btn => {
+        if (btn.dataset.tab === tabId) { btn.classList.add('tab-active'); btn.classList.remove('text-slate-600', 'hover:bg-slate-100'); }
+        else { btn.classList.remove('tab-active'); btn.classList.add('text-slate-600', 'hover:bg-slate-100'); }
+      });
+
+      renderTenantViews();
+      if (tabId === 'map-ap') setTimeout(initOrUpdateMap, 120);
+    }
+
+    function renderTenantViews() {
+      if (!tenantData || !activeTenant) return;
+      renderPackageDropdown();
+      renderDashboard();
+      renderSalesTable();
+      renderBillingTable();
+      renderExpenses();
+      renderAccessPointsAndOdp();
+      renderOpsCards();
+      renderTickets();
+      renderTenantSettings();
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function renderPackageDropdown() {
+      const sel = document.getElementById('sc-paket');
+      if (!sel) return;
+      const pkgs = tenantData.packages || defaultTenantData.packages;
+      sel.innerHTML = pkgs.map(p => `<option value="${escapeHtml(p.name)}" data-harga="${p.harga}" data-speed="${escapeHtml(p.kecepatan)}">${escapeHtml(p.name)}</option>`).join('') +
+        '<option value="Custom">Custom Paket</option>';
+      if (pkgs.length > 0) {
+        document.getElementById('sc-harga').value = pkgs[0].harga;
+        document.getElementById('sc-kecepatan').value = pkgs[0].kecepatan;
+      }
+    }
+
+    function renderDashboard() {
+      const income = tenantData.customers.filter(c => c.status === 'LUNAS').reduce((s, c) => s + Number(c.harga || 0), 0)
+        + tenantData.opsRecords.reduce((s, o) => s + Number(o.nominal || 0), 0);
+      const exp = tenantData.expenses.reduce((s, e) => s + Number(e.amount || 0), 0);
+      const dueCount = tenantData.customers.filter(c => daysUntil(c.jatuhTempo) <= 3).length;
+
+      document.getElementById('kpi-cards-grid').innerHTML = [
+        { label: 'Omzet Pemasukan', val: formatRupiah(income), sub: `${tenantData.customers.length} Pelanggan`, icon: 'wallet', bg: 'bg-blue-50 text-blue-600' },
+        { label: 'Pengeluaran', val: formatRupiah(exp), sub: `${tenantData.expenses.length} Catatan`, icon: 'trending-down', bg: 'bg-rose-50 text-rose-600' },
+        { label: 'Laba Bersih', val: formatRupiah(income - exp), sub: 'Omzet - Pengeluaran', icon: 'trending-up', bg: 'bg-emerald-50 text-emerald-600' },
+        { label: 'Siap Tagih (H-3)', val: `${dueCount} Akun`, sub: 'Kirim WA 1-Klik', icon: 'bell-ring', bg: 'bg-amber-50 text-amber-600' }
+      ].map(k => `
+        <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-sm flex items-start justify-between">
+          <div><p class="text-xs font-medium text-slate-500">${k.label}</p><p class="text-xl font-extrabold text-slate-900 mt-1">${k.val}</p><p class="text-[11px] text-slate-400 mt-1">${k.sub}</p></div>
+          <div class="w-10 h-10 rounded-xl ${k.bg} flex items-center justify-center"><i data-lucide="${k.icon}" class="w-5 h-5"></i></div>
+        </div>
+      `).join('');
+
+      const ready = tenantData.customers.filter(c => daysUntil(c.jatuhTempo) <= 3);
+      document.getElementById('due-soon-list').innerHTML = ready.length
+        ? ready.map(c => {
+            const diff = daysUntil(c.jatuhTempo);
+            const waText = encodeURIComponent(`Halo *${c.nama}*, tagihan WiFi *${activeTenant.name}* (${c.paket}) sebesar *${formatRupiah(c.harga)}* jatuh tempo *${c.jatuhTempo}*.\nPembayaran: ${activeTenant.rekening || '-'}`);
+            return `
+              <div class="p-3 rounded-xl border ${diff < 0 ? 'border-rose-200 bg-rose-50/50' : 'border-amber-200 bg-amber-50/50'} flex items-center justify-between gap-2 text-xs">
+                <div class="min-w-0"><p class="font-bold text-slate-900 truncate">${escapeHtml(c.nama)}</p><p class="text-[11px] text-slate-500">${diff < 0 ? 'Jatuh Tempo' : `H-${diff}`} • ${formatRupiah(c.harga)}</p></div>
+                ${c.wa ? `<a href="https://wa.me/${c.wa.replace(/\D/g,'')}?text=${waText}" target="_blank" class="px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white text-[10px] font-bold shrink-0">WA</a>` : ''}
+              </div>
+            `;
+          }).join('')
+        : '<p class="text-xs text-slate-400 text-center py-6">Tidak ada tagihan mendesak.</p>';
+
+      const ctx = document.getElementById('revenueChart').getContext('2d');
+      if (revenueChartInstance) revenueChartInstance.destroy();
+      revenueChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Agu', 'Sep', 'Okt', 'Nov'],
+          datasets: [
+            { label: 'Pemasukan', data: [Math.round(income * 0.75), Math.round(income * 0.85), Math.round(income * 0.92), income], backgroundColor: '#2563eb', borderRadius: 6 },
+            { label: 'Pengeluaran', data: [Math.round(exp * 0.8), Math.round(exp * 0.9), Math.round(exp * 0.95), exp], backgroundColor: '#f43f5e', borderRadius: 6 }
+          ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+      });
+    }
+
+    function renderSalesTable() {
+      const q = (document.getElementById('sales-search').value || '').toLowerCase();
+      const rows = tenantData.customers.filter(c =>
+        c.nama.toLowerCase().includes(q) || (c.odpPort || '').toLowerCase().includes(q) || (c.sn || '').toLowerCase().includes(q) || (c.id || '').toLowerCase().includes(q)
+      );
+      const isTenantAdmin = currentUser && currentUser.role === 'ADMIN_PROJEK';
+
+      document.getElementById('sales-customer-tbody').innerHTML = rows.length
+        ? rows.map(c => `
+          <tr class="hover:bg-slate-50">
+            <td class="py-3 px-3"><p class="font-bold text-slate-900">${escapeHtml(c.nama)}</p><p class="text-[11px] text-slate-500">${escapeHtml(c.id)} • ${escapeHtml(c.wa || '-')}</p></td>
+            <td class="py-3 px-3"><p class="font-semibold text-blue-700">${escapeHtml(c.paket)}</p><p class="text-[11px] text-slate-500">${formatRupiah(c.harga)} • ${escapeHtml(c.kecepatan)}</p></td>
+            <td class="py-3 px-3 text-[11px]"><p>SN: <strong>${escapeHtml(c.sn || '-')}</strong></p><p class="text-slate-500">${escapeHtml(c.redaman || '-')} • ${c.kabel || 0}m</p></td>
+            <td class="py-3 px-3 space-y-1"><p class="font-medium">${escapeHtml(c.odpPort)}</p><div class="flex gap-1"><a href="https://maps.google.com/?q=${encodeURIComponent(c.tikorOdp)}" target="_blank" class="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-700">ODP</a><a href="https://maps.google.com/?q=${encodeURIComponent(c.tikorRumah)}" target="_blank" class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700">Rumah</a></div></td>
+            <td class="py-3 px-3 text-right">
+              <div class="inline-flex items-center gap-1">
+                <button type="button" data-qr-id="${c.id}" class="btn-show-qr px-2 py-1 rounded-lg bg-slate-900 text-white text-[11px] font-semibold">QR</button>
+                ${isTenantAdmin ? `<button type="button" data-edit-cust="${c.id}" class="btn-edit-cust px-2 py-1 rounded-lg bg-amber-50 text-amber-700 text-[11px] font-semibold">Edit</button><button type="button" data-del-cust="${c.id}" class="btn-del-cust px-2 py-1 rounded-lg bg-rose-50 text-rose-700 text-[11px] font-semibold">Hapus</button>` : ''}
+              </div>
+            </td>
+          </tr>
+        `).join('')
+        : '<tr><td colspan="5" class="py-6 text-center text-slate-400">Belum ada pelanggan.</td></tr>';
+
+      document.querySelectorAll('.btn-show-qr').forEach(b => b.addEventListener('click', () => openQrModal(b.dataset.qrId)));
+      document.querySelectorAll('.btn-edit-cust').forEach(b => b.addEventListener('click', () => openEditCustomerModal(b.dataset.editCust)));
+      document.querySelectorAll('.btn-del-cust').forEach(b => b.addEventListener('click', () => confirmDeleteRecord('customers', b.dataset.delCust, 'pelanggan')));
+    }
+
+    function confirmDeleteRecord(key, id, label) {
+      openModal('Konfirmasi Hapus', `
+        <div class="space-y-4 text-xs">
+          <p class="text-slate-600">Hapus data <strong>${escapeHtml(label)}</strong> (${escapeHtml(id)})?</p>
+          <div class="flex justify-end gap-2">
+            <button type="button" id="btn-cancel-del" class="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-semibold">Batal</button>
+            <button type="button" id="btn-confirm-del" class="px-4 py-2 rounded-xl bg-rose-600 text-white font-semibold">Ya, Hapus</button>
+          </div>
+        </div>
+      `);
+      document.getElementById('btn-cancel-del').addEventListener('click', closeModal);
+      document.getElementById('btn-confirm-del').addEventListener('click', () => {
+        tenantData[key] = tenantData[key].filter(item => item.id !== id);
+        saveTenantData();
+        closeModal();
+        renderTenantViews();
+        if (!document.getElementById('tab-map-ap').classList.contains('hidden')) initOrUpdateMap();
+        showToast(`Data ${label} dihapus!`, 'success');
+      });
+    }
+
+    function openEditCustomerModal(custId) {
+      const c = tenantData.customers.find(x => x.id === custId);
+      if (!c) return;
+      openModal(`Edit: ${c.nama}`, `
+        <form id="edit-cust-form" class="space-y-3 text-xs">
+          <div class="grid grid-cols-2 gap-2">
+            <div><label class="font-semibold">Nama</label><input id="ec-nama" type="text" required value="${escapeHtml(c.nama)}" class="w-full px-3 py-2 rounded-xl border mt-1" /></div>
+            <div><label class="font-semibold">No. WA</label><input id="ec-wa" type="text" value="${escapeHtml(c.wa || '')}" class="w-full px-3 py-2 rounded-xl border mt-1" /></div>
+          </div>
+          <div class="grid grid-cols-3 gap-2">
+            <div><label class="font-semibold">Paket</label><input id="ec-paket" type="text" required value="${escapeHtml(c.paket)}" class="w-full px-3 py-2 rounded-xl border mt-1" /></div>
+            <div><label class="font-semibold">Harga</label><input id="ec-harga" type="number" required value="${c.harga}" class="w-full px-3 py-2 rounded-xl border mt-1" /></div>
+            <div><label class="font-semibold">Kecepatan</label><input id="ec-speed" type="text" required value="${escapeHtml(c.kecepatan)}" class="w-full px-3 py-2 rounded-xl border mt-1" /></div>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div><label class="font-semibold">Jatuh Tempo</label><input id="ec-jt" type="date" required value="${escapeHtml(c.jatuhTempo)}" class="w-full px-3 py-2 rounded-xl border mt-1" /></div>
+            <div><label class="font-semibold">ODP &amp; Port</label><input id="ec-odp" type="text" required value="${escapeHtml(c.odpPort)}" class="w-full px-3 py-2 rounded-xl border mt-1" /></div>
+          </div>
+          <button type="submit" class="w-full py-2.5 rounded-xl bg-blue-600 text-white font-semibold">Simpan Perubahan</button>
+        </form>
+      `);
+      document.getElementById('edit-cust-form').addEventListener('submit', e => {
+        e.preventDefault();
+        c.nama = document.getElementById('ec-nama').value.trim();
+        c.wa = document.getElementById('ec-wa').value.trim();
+        c.paket = document.getElementById('ec-paket').value.trim();
+        c.harga = Number(document.getElementById('ec-harga').value);
+        c.kecepatan = document.getElementById('ec-speed').value.trim();
+        c.jatuhTempo = document.getElementById('ec-jt').value;
+        c.odpPort = document.getElementById('ec-odp').value.trim();
+        saveTenantData(); closeModal(); renderTenantViews();
+        showToast('Data pelanggan diperbarui!', 'success');
+      });
+    }
+
+    function openQrModal(custId) {
+      const c = tenantData.customers.find(x => x.id === custId);
+      if (!c) return;
+      const basePortal = activeTenant.portalUrl || 'cek-tagihan.html';
+      const qrLink = `${basePortal}?id=${encodeURIComponent(c.id)}`;
+      openModal('Stiker QR Code Modem Pelanggan', `
+        <div class="border-2 border-dashed border-slate-300 rounded-2xl p-5 text-center space-y-3 bg-white">
+          <p class="text-xs font-extrabold text-blue-600 uppercase tracking-wider">${escapeHtml(activeTenant.name)}</p>
+          <div id="qr-canvas-box" class="flex justify-center py-2"></div>
+          <div>
+            <p class="font-extrabold text-sm text-slate-900">${escapeHtml(c.nama)}</p>
+            <p class="text-xs font-mono text-slate-600">ID: ${escapeHtml(c.id)} • ${escapeHtml(c.paket)}</p>
+            <p class="text-[10px] text-slate-400 mt-1">Scan QR untuk Cek Tagihan &amp; Lapor Gangguan</p>
+          </div>
+        </div>
+        <div class="mt-4 flex justify-end"><button type="button" id="btn-print-qr" class="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold">Cetak Stiker</button></div>
+      `);
+      if (window.QRCode) new QRCode(document.getElementById('qr-canvas-box'), { text: qrLink, width: 140, height: 140 });
+      document.getElementById('btn-print-qr').addEventListener('click', () => window.print());
+    }
+
+    function renderBillingTable() {
+      const filter = document.getElementById('billing-filter-status').value;
+      const q = (document.getElementById('billing-search').value || '').toLowerCase();
+      let rows = tenantData.customers.filter(c => c.nama.toLowerCase().includes(q) || c.id.toLowerCase().includes(q));
+      if (filter === 'H_MINUS_3') rows = rows.filter(c => { const d = daysUntil(c.jatuhTempo); return d >= 0 && d <= 3; });
+      else if (filter === 'JATUH_TEMPO') rows = rows.filter(c => daysUntil(c.jatuhTempo) < 0);
+      else if (filter === 'LUNAS') rows = rows.filter(c => c.status === 'LUNAS' && daysUntil(c.jatuhTempo) >= 0);
+
+      document.getElementById('billing-tbody').innerHTML = rows.length ? rows.map(c => {
+        const isOverdue = daysUntil(c.jatuhTempo) < 0;
+        const waText = encodeURIComponent(`Halo *${c.nama}*,\nTagihan WiFi *${activeTenant.name}* (${c.paket}) sebesar *${formatRupiah(c.harga)}* jatuh tempo *${c.jatuhTempo}*.\nRekening: ${activeTenant.rekening || '-'}`);
+        return `
+          <tr class="hover:bg-slate-50">
+            <td class="py-3 px-3 font-bold">${escapeHtml(c.nama)}<span class="block text-[10px] text-slate-400 font-normal">${escapeHtml(c.id)}</span></td>
+            <td class="py-3 px-3">${escapeHtml(c.paket)}</td>
+            <td class="py-3 px-3 text-right font-bold">${formatRupiah(c.harga)}</td>
+            <td class="py-3 px-3 font-semibold">${escapeHtml(c.jatuhTempo)}</td>
+            <td class="py-3 px-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isOverdue ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}">${isOverdue ? 'JATUH TEMPO' : 'LUNAS'}</span></td>
+            <td class="py-3 px-3 text-right">
+              <div class="inline-flex gap-1.5">
+                <button type="button" data-pay-id="${c.id}" class="btn-pay-cust px-2.5 py-1.5 rounded-lg bg-blue-600 text-white text-[11px] font-semibold">Bayar +1 Bln</button>
+                <button type="button" data-receipt-id="${c.id}" class="btn-receipt-cust px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-700 text-[11px] font-semibold">Struk</button>
+                ${c.wa ? `<a href="https://wa.me/${c.wa.replace(/\D/g,'')}?text=${waText}" target="_blank" class="px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 text-[11px] font-semibold">WA</a>` : ''}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('') : '<tr><td colspan="6" class="py-6 text-center text-slate-400">Tidak ada data tagihan cocok.</td></tr>';
+
+      document.querySelectorAll('.btn-pay-cust').forEach(b => b.addEventListener('click', () => {
+        const c = tenantData.customers.find(x => x.id === b.dataset.payId);
+        if (c) {
+          c.tglBayar = new Date().toISOString().split('T')[0];
+          c.jatuhTempo = addMonths(c.jatuhTempo, 1);
+          c.status = 'LUNAS';
+          saveTenantData(); renderTenantViews();
+          if (activeTenant.tgNotifyPay !== false) {
+            sendTelegramDirect(`✅ *Pembayaran Tagihan Diterima*\n• Usaha: ${activeTenant.name}\n• Pelanggan: *${c.nama}* (${c.id})\n• Nominal: ${formatRupiah(c.harga)}\n• Jatuh Tempo Baru: *${c.jatuhTempo}*`);
+          }
+          showToast(`Pembayaran ${c.nama} dicatat!`, 'success');
+        }
+      }));
+      document.querySelectorAll('.btn-receipt-cust').forEach(b => b.addEventListener('click', () => {
+        const c = tenantData.customers.find(x => x.id === b.dataset.receiptId);
+        if (!c) return;
+        openModal('Struk Pembayaran WiFi', `
+          <div class="border border-dashed border-slate-300 rounded-xl p-5 bg-slate-50 space-y-2 text-xs">
+            <div class="text-center border-b border-dashed pb-2"><h4 class="font-extrabold text-sm">${escapeHtml(activeTenant.name)}</h4><p class="text-slate-500">Bukti Pembayaran Resmi</p></div>
+            <div class="flex justify-between"><span>Pelanggan</span><span class="font-bold">${escapeHtml(c.nama)} (${escapeHtml(c.id)})</span></div>
+            <div class="flex justify-between"><span>Paket</span><span>${escapeHtml(c.paket)}</span></div>
+            <div class="flex justify-between"><span>Tgl Bayar</span><span>${escapeHtml(c.tglBayar)}</span></div>
+            <div class="flex justify-between"><span>Jatuh Tempo Baru</span><span>${escapeHtml(c.jatuhTempo)}</span></div>
+            <div class="flex justify-between pt-2 border-t text-sm font-extrabold"><span>TOTAL</span><span>${formatRupiah(c.harga)}</span></div>
+          </div>
+          <div class="mt-4 flex justify-end"><button type="button" id="btn-pr-r" class="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold">Cetak Struk</button></div>
+        `);
+        document.getElementById('btn-pr-r').addEventListener('click', () => window.print());
+      }));
+    }
+
+    function renderExpenses() {
+      const total = tenantData.expenses.reduce((s, e) => s + Number(e.amount || 0), 0);
+      document.getElementById('exp-total-badge').textContent = formatRupiah(total);
+      document.getElementById('expense-list').innerHTML = tenantData.expenses.map(e => `
+        <div class="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50 text-xs">
+          <div><p class="font-bold">${escapeHtml(e.title)}</p><p class="text-[11px] text-slate-500">${escapeHtml(e.category)} • ${escapeHtml(e.date)}</p></div>
+          <div class="flex items-center gap-2"><span class="font-bold text-rose-600">-${formatRupiah(e.amount)}</span><button type="button" data-del-exp="${e.id}" class="btn-del-exp px-2 py-1 rounded-lg bg-rose-50 text-rose-600 text-[10px] font-semibold">Hapus</button></div>
+        </div>
+      `).join('');
+      document.querySelectorAll('.btn-del-exp').forEach(b => b.addEventListener('click', () => confirmDeleteRecord('expenses', b.dataset.delExp, 'pengeluaran')));
+    }
+
+    function initOrUpdateMap() {
+      if (!window.L) return;
+      const mapEl = document.getElementById('network-map');
+      if (!mapEl) return;
+      if (!leafletMap) {
+        leafletMap = L.map('network-map').setView([1.474830, 124.842079], 15);
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', { attribution: 'Esri' }).addTo(leafletMap);
+        mapLayerGroup = L.layerGroup().addTo(leafletMap);
+      }
+      leafletMap.invalidateSize();
+      mapLayerGroup.clearLayers();
+      const bounds = [];
+      tenantData.customers.forEach(c => {
+        const r = parseLatLng(c.tikorRumah); if (r) { L.circleMarker(r, { radius: 7, color: '#059669', fillColor: '#10b981', fillOpacity: 0.9 }).bindPopup(`<b>${escapeHtml(c.nama)}</b><br/>${escapeHtml(c.odpPort)}`).addTo(mapLayerGroup); bounds.push(r); }
+        const o = parseLatLng(c.tikorOdp); if (o) { L.circleMarker(o, { radius: 8, color: '#1d4ed8', fillColor: '#3b82f6', fillOpacity: 0.9 }).bindPopup(`<b>ODP: ${escapeHtml(c.odpPort)}</b>`).addTo(mapLayerGroup); bounds.push(o); }
+      });
+      tenantData.accessPoints.forEach(ap => {
+        const p = parseLatLng(ap.tikor); if (p) { L.circleMarker(p, { radius: 9, color: '#b45309', fillColor: '#f59e0b', fillOpacity: 0.9 }).bindPopup(`<b>AP: ${escapeHtml(ap.name)}</b><br/>${escapeHtml(ap.ip)}`).addTo(mapLayerGroup); bounds.push(p); }
+      });
+      if (bounds.length > 0) leafletMap.fitBounds(bounds, { padding: [30, 30] });
+    }
+
+    function parseLatLng(str) {
+      if (!str) return null;
+      const p = String(str).split(',').map(s => parseFloat(s.trim()));
+      return (p.length === 2 && !isNaN(p[0]) && !isNaN(p[1])) ? p : null;
+    }
+
+    function renderAccessPointsAndOdp() {
+      document.getElementById('ap-list-grid').innerHTML = tenantData.accessPoints.map(ap => `
+        <div class="p-3 rounded-xl border border-slate-200 bg-slate-50 text-xs flex items-center justify-between">
+          <div><p class="font-bold">${escapeHtml(ap.name)}</p><p class="text-[11px] font-mono text-slate-500">${escapeHtml(ap.ip)} • ${escapeHtml(ap.ssid)}</p></div>
+          <div class="flex gap-1">
+            <button type="button" data-ap-toggle="${ap.id}" class="btn-ap-toggle px-2 py-0.5 rounded-full text-[10px] font-bold ${ap.status === 'ONLINE' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">${escapeHtml(ap.status)}</button>
+            <button type="button" data-del-ap="${ap.id}" class="btn-del-ap px-1.5 py-0.5 rounded bg-rose-50 text-rose-600 text-[10px]">Hapus</button>
+          </div>
+        </div>
+      `).join('');
+      document.querySelectorAll('.btn-ap-toggle').forEach(b => b.addEventListener('click', () => {
+        const ap = tenantData.accessPoints.find(x => x.id === b.dataset.apToggle);
+        if (ap) { ap.status = ap.status === 'ONLINE' ? 'OFFLINE' : 'ONLINE'; saveTenantData(); renderAccessPointsAndOdp(); }
+      }));
+      document.querySelectorAll('.btn-del-ap').forEach(b => b.addEventListener('click', () => confirmDeleteRecord('accessPoints', b.dataset.delAp, 'Access Point')));
+
+      const counts = {};
+      tenantData.customers.forEach(c => { const k = (c.odpPort || 'ODP').split('/')[0].trim(); counts[k] = (counts[k] || 0) + 1; });
+      document.getElementById('odp-capacity-list').innerHTML = Object.entries(counts).map(([k, u]) => `<span class="px-3 py-1 rounded-xl bg-blue-50 text-blue-800 text-xs font-semibold">${escapeHtml(k)}: ${u}/8 Port</span>`).join('');
+    }
+
+    function renderOpsCards() {
+      document.getElementById('ops-total-badge').textContent = `${tenantData.opsRecords.length} Entri`;
+      document.getElementById('ops-cards-grid').innerHTML = tenantData.opsRecords.map(o => `
+        <div class="border border-slate-200 rounded-2xl p-4 bg-slate-50/70 space-y-2 text-xs">
+          <div class="flex justify-between"><div><span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 text-[10px] font-bold">${escapeHtml(o.jenis)}</span><h4 class="font-bold text-sm mt-1">${escapeHtml(o.atasNama)}</h4><p class="text-slate-500">${escapeHtml(o.lokasi)}</p></div><div class="text-right"><p class="font-extrabold text-blue-700">${o.jumlah} Unit</p><p>${formatRupiah(o.nominal)}</p></div></div>
+          <div class="flex justify-between pt-2 border-t text-[11px]"><span>JT: <strong>${escapeHtml(o.jatuhTempo)}</strong></span><div class="flex gap-2">${o.fotoData ? `<button type="button" data-photo-id="${o.id}" class="btn-view-photo text-blue-600 font-semibold">Foto</button>` : ''}<button type="button" data-del-ops="${o.id}" class="btn-del-ops text-rose-600 font-semibold">Hapus</button></div></div>
+        </div>
+      `).join('');
+      document.querySelectorAll('.btn-view-photo').forEach(b => b.addEventListener('click', () => { const i = tenantData.opsRecords.find(x => x.id === b.dataset.photoId); if (i) openModal('Foto Dokumentasi', `<img src="${i.fotoData}" class="w-full rounded-xl" />`); }));
+      document.querySelectorAll('.btn-del-ops').forEach(b => b.addEventListener('click', () => confirmDeleteRecord('opsRecords', b.dataset.delOps, 'voucher/foto')));
+    }
+
+    function renderTickets() {
+      document.getElementById('tickets-list').innerHTML = tenantData.tickets.length ? tenantData.tickets.map(t => `
+        <div class="p-3 rounded-xl border bg-slate-50 flex justify-between items-center text-xs">
+          <div><p class="font-bold">${escapeHtml(t.customer)} — <span class="text-rose-600">${escapeHtml(t.issue)}</span></p><p class="text-[11px] text-slate-500">Teknisi: ${escapeHtml(t.teknisi)}</p></div>
+          <div class="flex gap-1.5"><button type="button" data-tk-id="${t.id}" class="btn-tk-toggle px-2 py-1 rounded-lg font-bold text-[10px] ${t.status === 'SELESAI' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-800'}">${escapeHtml(t.status)}</button><button type="button" data-del-tk="${t.id}" class="btn-del-tk px-2 py-1 rounded-lg bg-rose-50 text-rose-600 text-[10px]">Hapus</button></div>
+        </div>
+      `).join('') : '<p class="text-xs text-slate-400">Belum ada tiket gangguan.</p>';
+
+      document.querySelectorAll('.btn-tk-toggle').forEach(b => b.addEventListener('click', () => {
+        const t = tenantData.tickets.find(x => x.id === b.dataset.tkId);
+        if (t) { t.status = t.status === 'SELESAI' ? 'PROSES' : 'SELESAI'; saveTenantData(); renderTickets(); }
+      }));
+      document.querySelectorAll('.btn-del-tk').forEach(b => b.addEventListener('click', () => confirmDeleteRecord('tickets', b.dataset.delTk, 'tiket')));
+    }
+
+    function renderTenantSettings() {
+      document.getElementById('tp-brand').value = activeTenant.name;
+      document.getElementById('tp-wa').value = activeTenant.wa || '';
+      document.getElementById('tp-rek').value = activeTenant.rekening || '';
+      document.getElementById('tp-portal').value = activeTenant.portalUrl || '';
+      document.getElementById('tp-tg-token').value = activeTenant.tgToken || '';
+      document.getElementById('tp-tg-chat').value = activeTenant.tgChatId || '';
+      document.getElementById('tp-tg-new').checked = activeTenant.tgNotifyNew !== false;
+      document.getElementById('tp-tg-pay').checked = activeTenant.tgNotifyPay !== false;
+      document.getElementById('tp-tg-tkt').checked = activeTenant.tgNotifyTicket !== false;
+
+      const pkgs = tenantData.packages || [];
+      document.getElementById('tenant-package-list').innerHTML = pkgs.length
+        ? pkgs.map(p => `
+          <div class="p-2.5 rounded-xl border bg-slate-50 flex justify-between items-center text-xs">
+            <div><p class="font-bold">${escapeHtml(p.name)}</p><p class="text-[11px] text-slate-500">${formatRupiah(p.harga)} • ${escapeHtml(p.kecepatan)}</p></div>
+            <button type="button" data-del-pkg="${p.id}" class="btn-del-pkg text-rose-600 font-semibold">Hapus</button>
+          </div>
+        `).join('')
+        : '<p class="text-xs text-slate-400">Belum ada paket custom.</p>';
+      document.querySelectorAll('.btn-del-pkg').forEach(b => b.addEventListener('click', () => {
+        tenantData.packages = tenantData.packages.filter(x => x.id !== b.dataset.delPkg);
+        saveTenantData(); renderTenantViews(); showToast('Paket dihapus.', 'warning');
+      }));
+
+      const team = master.users.filter(u => u.projectId === activeTenant.id && u.role === 'SALES');
+      document.getElementById('tenant-team-list').innerHTML = team.length
+        ? team.map(u => `<div class="p-2.5 rounded-xl border bg-slate-50 flex justify-between items-center text-xs"><div><p class="font-bold">${escapeHtml(u.fullName)}</p><p class="text-[11px] text-slate-500">User: ${escapeHtml(u.username)}</p></div><button type="button" data-del-tm="${u.id}" class="btn-del-tm text-rose-600 font-semibold">Hapus</button></div>`).join('')
+        : '<p class="text-xs text-slate-400">Belum ada akun sales.</p>';
+      document.querySelectorAll('.btn-del-tm').forEach(b => b.addEventListener('click', () => {
+        master.users = master.users.filter(x => x.id !== b.dataset.delTm);
+        saveMaster(); renderTenantSettings();
+      }));
+    }
+
+    // ==================== EVENT LISTENERS ====================
+    document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+    document.getElementById('btn-suspended-logout').addEventListener('click', () => {
+      document.getElementById('suspended-view').classList.add('hidden');
+      document.getElementById('login-view').classList.remove('hidden');
+    });
+
+    document.querySelectorAll('.btn-demo-fill').forEach(b => b.addEventListener('click', () => {
+      document.getElementById('login-username').value = b.dataset.demoUser;
+      document.getElementById('login-password').value = b.dataset.demoPass;
+      showToast(`Akun demo ${b.dataset.demoUser} diisi. Klik Masuk!`, 'info');
+    }));
+
+    document.getElementById('login-form').addEventListener('submit', e => {
+      e.preventDefault();
+      performLogin(document.getElementById('login-username').value, document.getElementById('login-password').value);
+    });
+
+    document.getElementById('btn-logout').addEventListener('click', () => {
+      currentUser = null; activeTenant = null; tenantData = null; saveSession(null);
+      document.getElementById('app-shell').classList.add('hidden');
+      document.getElementById('login-view').classList.remove('hidden');
+    });
+
+    document.getElementById('tenant-profile-form').addEventListener('submit', e => {
+      e.preventDefault();
+      activeTenant.name = document.getElementById('tp-brand').value.trim();
+      activeTenant.wa = document.getElementById('tp-wa').value.trim();
+      activeTenant.rekening = document.getElementById('tp-rek').value.trim();
+      activeTenant.portalUrl = document.getElementById('tp-portal').value.trim();
+      activeTenant.tgToken = document.getElementById('tp-tg-token').value.trim();
+      activeTenant.tgChatId = document.getElementById('tp-tg-chat').value.trim();
+      activeTenant.tgNotifyNew = document.getElementById('tp-tg-new').checked;
+      activeTenant.tgNotifyPay = document.getElementById('tp-tg-pay').checked;
+      activeTenant.tgNotifyTicket = document.getElementById('tp-tg-tkt').checked;
+      saveMaster();
+      document.getElementById('tenant-brand-header').textContent = activeTenant.name;
+      showToast('Profil & Pengaturan Telegram disimpan!', 'success');
+    });
+
+    document.getElementById('btn-test-tg-tenant').addEventListener('click', async () => {
+      const token = document.getElementById('tp-tg-token').value.trim();
+      const chat = document.getElementById('tp-tg-chat').value.trim();
+      if (!token || !chat) return showToast('Isi Bot Token & Chat ID Telegram dulu.', 'warning');
+      try {
+        const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: chat, text: `✅ Tes Notifikasi ${activeTenant.name} berhasil!` })
+        });
+        if (res.ok) showToast('Pesan tes terkirim ke Telegram Anda!', 'success');
+        else showToast('Gagal kirim ke Telegram. Cek Token/Chat ID.', 'error');
+      } catch (err) { showToast('Gagal terhubung ke Telegram.', 'error'); }
+    });
+
+    document.getElementById('btn-send-tg-summary').addEventListener('click', async () => {
+      if (!activeTenant.tgToken || !activeTenant.tgChatId) return showToast('Isi Bot Token & Chat ID di menu Pengaturan & Bot dulu.', 'warning');
+      const income = tenantData.customers.filter(c => c.status === 'LUNAS').reduce((s, c) => s + Number(c.harga || 0), 0)
+        + tenantData.opsRecords.reduce((s, o) => s + Number(o.nominal || 0), 0);
+      const exp = tenantData.expenses.reduce((s, e) => s + Number(e.amount || 0), 0);
+      const dueCount = tenantData.customers.filter(c => daysUntil(c.jatuhTempo) <= 3).length;
+      const ok = await sendTelegramDirect(`📊 *Rekap ${activeTenant.name}*\n• Pelanggan: ${tenantData.customers.length} akun\n• Pemasukan Lunas: ${formatRupiah(income)}\n• Pengeluaran: ${formatRupiah(exp)}\n• Laba Bersih: *${formatRupiah(income - exp)}*\n• Siap Tagih (H-3/Telat): ${dueCount} akun`);
+      if (ok) showToast('Rekap keuangan dikirim ke Telegram!', 'success');
+      else showToast('Gagal kirim rekap ke Telegram.', 'error');
+    });
+
+    document.getElementById('tenant-package-form').addEventListener('submit', e => {
+      e.preventDefault();
+      tenantData.packages.push({
+        id: 'PKG-' + Date.now(),
+        name: document.getElementById('pkg-name').value.trim(),
+        harga: Number(document.getElementById('pkg-harga').value),
+        kecepatan: document.getElementById('pkg-speed').value.trim()
+      });
+      saveTenantData(); e.target.reset(); renderTenantViews();
+      showToast('Paket WiFi ditambahkan!', 'success');
+    });
+
+    document.getElementById('tenant-team-form').addEventListener('submit', e => {
+      e.preventDefault();
+      master.users.push({
+        id: 'USR-' + Date.now(), username: document.getElementById('tt-user').value.trim(),
+        pass: document.getElementById('tt-pass').value.trim(), fullName: document.getElementById('tt-name').value.trim(),
+        role: 'SALES', projectId: activeTenant.id
+      });
+      saveMaster(); e.target.reset(); renderTenantSettings(); showToast('Akun Sales ditambahkan!', 'success');
+    });
+
+    document.getElementById('btn-backup-json').addEventListener('click', () => {
+      const blob = new Blob([JSON.stringify({ tenant: activeTenant, data: tenantData }, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `backup-${activeTenant.id}-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      showToast('Backup JSON diunduh!', 'success');
+    });
+
+    document.getElementById('input-restore-json').addEventListener('change', e => {
+      const f = e.target.files[0]; if (!f) return;
+      const r = new FileReader();
+      r.onload = ev => {
+        try {
+          const parsed = JSON.parse(ev.target.result);
+          if (parsed && parsed.data && Array.isArray(parsed.data.customers)) {
+            tenantData = { ...loadTenantData(activeTenant.id), ...parsed.data };
+            saveTenantData(); renderTenantViews();
+            showToast('Data berhasil di-restore!', 'success');
+          } else showToast('Format file backup tidak valid.', 'error');
+        } catch (err) { showToast('Gagal membaca file JSON.', 'error'); }
+      };
+      r.readAsText(f);
+    });
+
+    document.getElementById('sc-paket').addEventListener('change', e => {
+      const opt = e.target.selectedOptions[0];
+      if (opt && opt.dataset.harga) { document.getElementById('sc-harga').value = opt.dataset.harga; document.getElementById('sc-kecepatan').value = opt.dataset.speed; }
+    });
+
+    function fillGPS(id) {
+      if (!navigator.geolocation) return showToast('Browser tidak mendukung GPS.', 'error');
+      navigator.geolocation.getCurrentPosition(
+        p => { document.getElementById(id).value = `${p.coords.latitude.toFixed(6)}, ${p.coords.longitude.toFixed(6)}`; showToast('GPS diambil!', 'success'); },
+        () => showToast('Izin lokasi/GPS ditolak browser.', 'warning')
+      );
+    }
+    document.getElementById('btn-gps-odp').addEventListener('click', () => fillGPS('sc-tikor-odp'));
+    document.getElementById('btn-gps-rumah').addEventListener('click', () => fillGPS('sc-tikor-rumah'));
+    document.getElementById('btn-gps-ap').addEventListener('click', () => fillGPS('ap-tikor'));
+
+    document.getElementById('sales-customer-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const c = {
+        id: 'CUS-' + Math.floor(100 + Math.random() * 900),
+        nama: document.getElementById('sc-nama').value.trim(), wa: document.getElementById('sc-wa').value.trim(),
+        paket: document.getElementById('sc-paket').value, harga: Number(document.getElementById('sc-harga').value),
+        kecepatan: document.getElementById('sc-kecepatan').value.trim(), tglBayar: document.getElementById('sc-tgl-bayar').value,
+        jatuhTempo: document.getElementById('sc-jatuh-tempo').value, sales: document.getElementById('sc-sales').value.trim(),
+        teknisi: document.getElementById('sc-teknisi').value.trim(), odpPort: document.getElementById('sc-odp-port').value.trim(),
+        tikorOdp: document.getElementById('sc-tikor-odp').value.trim(), tikorRumah: document.getElementById('sc-tikor-rumah').value.trim(),
+        sn: document.getElementById('sc-sn').value.trim(), redaman: document.getElementById('sc-redaman').value.trim(),
+        kabel: Number(document.getElementById('sc-kabel').value || 0), status: 'LUNAS'
+      };
+      tenantData.customers.unshift(c); saveTenantData();
+      if (activeTenant.tgNotifyNew !== false) {
+        sendTelegramDirect(`🆕 *Pelanggan Baru*\n• Nama: *${c.nama}* (${c.id})\n• Paket: ${c.paket} (${formatRupiah(c.harga)})\n• ODP: ${c.odpPort}`);
+      }
+      e.target.reset(); renderTenantViews(); showToast('Pelanggan disimpan!', 'success');
+    });
+
+    document.getElementById('sales-search').addEventListener('input', renderSalesTable);
+    document.getElementById('billing-search').addEventListener('input', renderBillingTable);
+    document.getElementById('billing-filter-status').addEventListener('change', renderBillingTable);
+
+    document.getElementById('btn-export-csv').addEventListener('click', () => {
+      const esc = v => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
+      const h = 'ID,Nama,WA,Paket,Harga,JatuhTempo,ODP,Status\n';
+      const b = tenantData.customers.map(c => [c.id, c.nama, c.wa, c.paket, c.harga, c.jatuhTempo, c.odpPort, c.status].map(esc).join(',')).join('\n');
+      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([h + b], { type: 'text/csv;charset=utf-8;' })); a.download = `pelanggan-${activeTenant.id}.csv`; a.click();
+      showToast('File CSV diunduh!', 'success');
+    });
+
+    document.getElementById('expense-form').addEventListener('submit', e => {
+      e.preventDefault();
+      tenantData.expenses.unshift({ id: 'EXP-' + Date.now(), title: document.getElementById('exp-title').value.trim(), category: document.getElementById('exp-cat').value, amount: Number(document.getElementById('exp-amount').value), date: document.getElementById('exp-date').value });
+      saveTenantData(); e.target.reset(); renderTenantViews(); showToast('Pengeluaran dicatat!', 'success');
+    });
+
+    document.getElementById('ap-form').addEventListener('submit', e => {
+      e.preventDefault();
+      tenantData.accessPoints.unshift({ id: 'AP-' + Date.now(), name: document.getElementById('ap-name').value.trim(), ip: document.getElementById('ap-ip').value.trim(), ssid: document.getElementById('ap-ssid').value.trim(), status: document.getElementById('ap-status').value, tikor: document.getElementById('ap-tikor').value.trim() });
+      saveTenantData(); e.target.reset(); renderAccessPointsAndOdp(); initOrUpdateMap(); showToast('Access Point disimpan!', 'success');
+    });
+
+    let tempOpsFoto = '';
+    document.getElementById('ops-foto').addEventListener('change', e => {
+      const f = e.target.files[0]; if (!f) return;
+      const r = new FileReader(); r.onload = ev => { tempOpsFoto = ev.target.result; document.getElementById('ops-foto-preview').src = tempOpsFoto; document.getElementById('ops-foto-preview-wrap').classList.remove('hidden'); }; r.readAsDataURL(f);
+    });
+    document.getElementById('ops-form').addEventListener('submit', e => {
+      e.preventDefault();
+      tenantData.opsRecords.unshift({ id: 'OPS-' + Date.now(), atasNama: document.getElementById('ops-atas-nama').value.trim(), lokasi: document.getElementById('ops-lokasi').value.trim(), jatuhTempo: document.getElementById('ops-jatuh-tempo').value, jenis: document.getElementById('ops-jenis').value, jumlah: Number(document.getElementById('ops-jumlah').value), nominal: Number(document.getElementById('ops-nominal').value), fotoData: tempOpsFoto });
+      saveTenantData(); e.target.reset(); tempOpsFoto = ''; document.getElementById('ops-foto-preview-wrap').classList.add('hidden'); renderTenantViews(); showToast('Data Voucher/Foto disimpan!', 'success');
+    });
+
+    document.getElementById('btn-add-ticket').addEventListener('click', () => {
+      openModal('Buat Tiket Gangguan', `<form id="m-tk" class="space-y-3 text-xs"><input id="tk-c" required placeholder="Nama Pelanggan" class="w-full px-3 py-2 rounded-xl border" /><input id="tk-i" required placeholder="Keluhan" class="w-full px-3 py-2 rounded-xl border" /><input id="tk-t" required placeholder="Teknisi" class="w-full px-3 py-2 rounded-xl border" /><button class="w-full py-2 rounded-xl bg-blue-600 text-white font-semibold">Simpan &amp; Kirim ke Telegram</button></form>`);
+      document.getElementById('m-tk').addEventListener('submit', ev => {
+        ev.preventDefault();
+        const tk = { id: 'TKT-' + Date.now(), customer: document.getElementById('tk-c').value.trim(), issue: document.getElementById('tk-i').value.trim(), teknisi: document.getElementById('tk-t').value.trim(), status: 'PROSES' };
+        tenantData.tickets.unshift(tk); saveTenantData();
+        if (activeTenant.tgNotifyTicket !== false) {
+          sendTelegramDirect(`🛠️ *Tiket Gangguan Baru*\n• Pelanggan: *${tk.customer}*\n• Keluhan: ${tk.issue}\n• Teknisi: ${tk.teknisi}`);
+        }
+        closeModal(); renderTickets(); showToast('Tiket gangguan dibuat!', 'success');
+      });
+    });
+
+    function initNetBillClient() {
+      document.getElementById('brand-title-login').textContent = master.platformName;
+      if (currentUser) {
+        const t = master.tenants.find(x => x.id === currentUser.projectId);
+        if (t) enterTenantApp(t, currentUser);
+      }
+      if (window.lucide) lucide.createIcons();
+    }
+    if (document.readyState === 'loading') window.addEventListener('DOMContentLoaded', initNetBillClient);
+    else initNetBillClient();
+  </script>
+</body>
+</html>

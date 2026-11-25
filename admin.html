@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel Owner SaaS — NetBill Pro</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+    .tab-active-saas { background: #4f46e5; color: #ffffff; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+
+  <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+  <!-- LOGIN OWNER -->
+  <section id="owner-login-view" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900">
+    <div class="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl p-6 sm:p-8 space-y-6">
+      <div class="text-center">
+        <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 mb-3">
+          <i data-lucide="crown" class="w-7 h-7"></i>
+        </div>
+        <h1 class="text-2xl font-extrabold text-white tracking-tight">Owner Command Center</h1>
+        <p class="text-xs text-slate-400 mt-1">Panel Khusus Pemilik Platform (Kelola Penyewa &amp; Lisensi)</p>
+      </div>
+
+      <form id="owner-login-form" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Username Owner</label>
+          <input id="ol-user" type="text" required value="superadmin" class="w-full px-4 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white focus:ring-2 focus:ring-indigo-500 outline-none text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Password</label>
+          <input id="ol-pass" type="password" required value="admin123" class="w-full px-4 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white focus:ring-2 focus:ring-indigo-500 outline-none text-sm" />
+        </div>
+        <button type="submit" class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm shadow-lg shadow-indigo-600/25 transition flex items-center justify-center gap-2">
+          <i data-lucide="log-in" class="w-4 h-4"></i> Masuk ke Panel Owner
+        </button>
+      </form>
+      <p class="text-[11px] text-slate-500 text-center">Default: <span class="text-slate-300 font-mono">superadmin / admin123</span></p>
+    </div>
+  </section>
+
+  <!-- OWNER SHELL -->
+  <div id="owner-shell" class="hidden min-h-screen flex flex-col">
+    <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-30">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center">
+            <i data-lucide="crown" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h1 id="saas-brand-header" class="font-bold text-white text-sm sm:text-base">NetBill Pro — Owner Panel</h1>
+            <p class="text-xs text-indigo-300">Manajemen Penyewa, Lisensi &amp; Akun Klien</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <a href="index.html" target="_blank" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5">
+            <i data-lucide="external-link" class="w-3.5 h-3.5"></i> <span class="hidden sm:inline">Buka App Klien</span>
+          </a>
+          <button id="btn-owner-logout" type="button" class="px-3.5 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 text-xs font-semibold flex items-center gap-1.5">
+            <i data-lucide="log-out" class="w-4 h-4"></i> Keluar
+          </button>
+        </div>
+      </div>
+      <nav class="max-w-7xl mx-auto px-4 sm:px-6 pb-3 flex items-center gap-2 overflow-x-auto">
+        <button type="button" data-saas-tab="overview" class="saas-nav-btn tab-active-saas px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap">
+          <i data-lucide="bar-chart-3" class="w-4 h-4"></i> Ringkasan Bisnis
+        </button>
+        <button type="button" data-saas-tab="tenants" class="saas-nav-btn text-slate-300 hover:bg-slate-800 px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap">
+          <i data-lucide="building-2" class="w-4 h-4"></i> Kelola Penyewa &amp; Lisensi
+        </button>
+        <button type="button" data-saas-tab="accounts" class="saas-nav-btn text-slate-300 hover:bg-slate-800 px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap">
+          <i data-lucide="users" class="w-4 h-4"></i> Akun Klien &amp; Pengaturan
+        </button>
+      </nav>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
+      <!-- TAB 1: OVERVIEW -->
+      <section id="saas-tab-overview" class="saas-tab space-y-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="saas-kpi-grid"></div>
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+          <h2 class="font-bold text-white text-base mb-1">Penyewa Mendekati Jatuh Tempo Sewa</h2>
+          <p class="text-xs text-slate-400 mb-4">Pantau klien yang masa sewanya tinggal &lt;= 7 hari atau sudah habis</p>
+          <div id="saas-expiring-list" class="space-y-2.5"></div>
+        </div>
+      </section>
+
+      <!-- TAB 2: TENANTS -->
+      <section id="saas-tab-tenants" class="saas-tab hidden space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div class="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+            <h2 class="font-bold text-white text-base">Tambah Penyewa / Klien Baru</h2>
+            <form id="saas-tenant-form" class="space-y-3 text-xs">
+              <input id="st-name" type="text" required placeholder="Nama WiFi / Usaha Klien" class="w-full px-3 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none" />
+              <input id="st-owner" type="text" required placeholder="Nama Pemilik / Client" class="w-full px-3 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none" />
+              <input id="st-wa" type="tel" placeholder="No. WA Klien (628...)" class="w-full px-3 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none" />
+              <div class="grid grid-cols-2 gap-2">
+                <select id="st-plan" class="px-3 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none">
+                  <option value="Starter">Paket Starter</option>
+                  <option value="Pro">Paket Pro</option>
+                  <option value="Enterprise">Paket Putus</option>
+                </select>
+                <input id="st-price" type="number" required value="100000" placeholder="Harga Sewa (Rp)" class="px-3 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none" />
+              </div>
+              <div>
+                <label class="block text-slate-400 mb-1">Masa Aktif Sewa Hingga *</label>
+                <input id="st-exp" type="date" required class="w-full px-3 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none" />
+              </div>
+              <button type="submit" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition">+ Daftarkan Penyewa</button>
+            </form>
+          </div>
+
+          <div class="lg:col-span-8 bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+            <h2 class="font-bold text-white text-base">Daftar Penyewa Sistem</h2>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr class="border-b border-slate-800 text-slate-400 uppercase">
+                    <th class="py-2.5 px-3">Usaha / Pemilik</th>
+                    <th class="py-2.5 px-3">Paket &amp; Sewa</th>
+                    <th class="py-2.5 px-3">Expired</th>
+                    <th class="py-2.5 px-3 text-right">Kontrol Akses</th>
+                  </tr>
+                </thead>
+                <tbody id="saas-tenants-tbody" class="divide-y divide-slate-800"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: ACCOUNTS & SETTINGS -->
+      <section id="saas-tab-accounts" class="saas-tab hidden space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+            <h2 class="font-bold text-white text-base">Buat Akun Login Klien</h2>
+            <form id="saas-user-form" class="space-y-3 text-xs">
+              <div class="grid grid-cols-2 gap-2">
+                <input id="su-username" type="text" required placeholder="Username login" class="px-3 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none" />
+                <input id="su-pass" type="text" required placeholder="Password" class="px-3 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none" />
+              </div>
+              <input id="su-fullname" type="text" required placeholder="Nama Lengkap Klien" class="w-full px-3 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none" />
+              <div class="grid grid-cols-2 gap-2">
+                <select id="su-role" class="px-3 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none">
+                  <option value="ADMIN_PROJEK">Admin Penyewa (Klien)</option>
+                  <option value="SALES">Sales / Teknisi</option>
+                </select>
+                <select id="su-tenant" class="px-3 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none"></select>
+              </div>
+              <button type="submit" class="w-full py-2.5 rounded-xl bg-indigo-600 text-white font-semibold">+ Buat Akun Klien</button>
+            </form>
+            <div id="saas-users-list" class="space-y-2 max-h-60 overflow-y-auto"></div>
+          </div>
+
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+            <h2 class="font-bold text-white text-base">Pengaturan White-Label, Telegram &amp; Backup</h2>
+            <form id="saas-master-form" class="space-y-3 text-xs">
+              <div>
+                <label class="block text-slate-400 mb-1">Nama Platform Anda (White-Label)</label>
+                <input id="sm-brand" type="text" class="w-full px-3 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none" />
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div><label class="block text-slate-400 mb-1">Telegram Bot Token</label><input id="sm-tg-token" type="text" placeholder="123456:ABC..." class="w-full px-3 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none" /></div>
+                <div><label class="block text-slate-400 mb-1">Telegram Chat ID</label><input id="sm-tg-chat" type="text" placeholder="987654321" class="w-full px-3 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white outline-none" /></div>
+              </div>
+              <div class="flex flex-wrap gap-2 pt-1">
+                <button type="submit" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold">Simpan Pengaturan</button>
+                <button type="button" id="btn-test-tg-master" class="px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold">Tes Telegram</button>
+              </div>
+            </form>
+
+            <div class="pt-4 border-t border-slate-800 space-y-2">
+              <p class="text-xs font-semibold text-slate-300">Backup / Pindah Perangkat Data Master</p>
+              <div class="flex flex-wrap gap-2 text-xs">
+                <button id="btn-export-master" type="button" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold">Download Backup Master (.json)</button>
+                <label class="px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-semibold cursor-pointer">
+                  Restore Master <input id="input-restore-master" type="file" accept=".json" class="hidden" />
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const MASTER_KEY = 'netbill_saas_master_v6';
+    const defaultMaster = {
+      platformName: 'NetBill Pro Platform',
+      ownerPass: 'admin123',
+      tgToken: '',
+      tgChatId: '',
+      tenants: [
+        {
+          id: 'PRJ-01', name: 'Cluster Melati FTTH', owner: 'Pak Rahmat', wa: '6281234567800',
+          plan: 'Pro', price: 100000, expiredAt: '2027-12-31', active: true,
+          rekening: 'BRI 1234-5678-90 a.n. Pak Rahmat', portalUrl: 'cek-tagihan.html',
+          tgToken: '', tgChatId: '', tgNotifyNew: true, tgNotifyPay: true, tgNotifyTicket: true
+        }
+      ],
+      users: [
+        { id: 'USR-2', username: 'admin_melati', pass: 'melati123', fullName: 'Pak Rahmat (Admin Melati)', role: 'ADMIN_PROJEK', projectId: 'PRJ-01' },
+        { id: 'USR-3', username: 'sales_budi', pass: 'sales123', fullName: 'Budi Santoso (Sales)', role: 'SALES', projectId: 'PRJ-01' }
+      ]
+    };
+
+    let master = loadMaster();
+    let isOwnerLoggedIn = false;
+
+    function loadMaster() {
+      try {
+        const raw = localStorage.getItem(MASTER_KEY);
+        if (raw) return { ...defaultMaster, ...JSON.parse(raw) };
+      } catch (e) {}
+      return JSON.parse(JSON.stringify(defaultMaster));
+    }
+
+    function saveMaster() {
+      try { localStorage.setItem(MASTER_KEY, JSON.stringify(master)); } catch (e) {}
+    }
+
+    function escapeHtml(str) {
+      return String(str == null ? '' : str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function formatRupiah(num) { return 'Rp ' + Number(num || 0).toLocaleString('id-ID'); }
+
+    function addMonths(dateStr, months) {
+      const d = dateStr ? new Date(dateStr) : new Date();
+      if (isNaN(d.getTime())) return new Date().toISOString().split('T')[0];
+      d.setMonth(d.getMonth() + months);
+      return d.toISOString().split('T')[0];
+    }
+
+    function daysUntil(dateStr) {
+      if (!dateStr) return 999;
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const target = new Date(dateStr); target.setHours(0, 0, 0, 0);
+      return Math.round((target - today) / (1000 * 60 * 60 * 24));
+    }
+
+    function showToast(msg, type = 'info') {
+      const colors = { success: 'bg-emerald-600 text-white', error: 'bg-rose-600 text-white', info: 'bg-indigo-600 text-white', warning: 'bg-amber-500 text-white' };
+      const el = document.createElement('div');
+      el.className = `pointer-events-auto px-4 py-3 rounded-xl shadow-lg text-xs font-semibold ${colors[type] || colors.info}`;
+      el.textContent = msg;
+      document.getElementById('toast-container').appendChild(el);
+      setTimeout(() => el.remove(), 3500);
+    }
+
+    function switchSaasTab(tabName) {
+      document.querySelectorAll('.saas-tab').forEach(el => el.classList.add('hidden'));
+      document.getElementById(`saas-tab-${tabName}`).classList.remove('hidden');
+      document.querySelectorAll('.saas-nav-btn').forEach(btn => {
+        if (btn.dataset.saasTab === tabName) {
+          btn.classList.add('tab-active-saas');
+          btn.classList.remove('text-slate-300', 'hover:bg-slate-800');
+        } else {
+          btn.classList.remove('tab-active-saas');
+          btn.classList.add('text-slate-300', 'hover:bg-slate-800');
+        }
+      });
+      renderSaasViews();
+    }
+
+    function renderSaasViews() {
+      document.getElementById('saas-brand-header').textContent = master.platformName + ' — Owner Panel';
+      const total = master.tenants.length;
+      const activeCount = master.tenants.filter(t => t.active && daysUntil(t.expiredAt) >= 0).length;
+      const suspendedCount = total - activeCount;
+      const mrr = master.tenants.filter(t => t.active).reduce((s, t) => s + Number(t.price || 0), 0);
+
+      document.getElementById('saas-kpi-grid').innerHTML = [
+        { label: 'Total Penyewa', val: `${total} Usaha`, icon: 'building-2', color: 'text-indigo-400' },
+        { label: 'Penyewa Aktif', val: `${activeCount} Aktif`, icon: 'check-circle', color: 'text-emerald-400' },
+        { label: 'Terkunci / Expired', val: `${suspendedCount} Usaha`, icon: 'lock', color: 'text-rose-400' },
+        { label: 'Potensi Omzet Sewa', val: formatRupiah(mrr), icon: 'wallet', color: 'text-amber-400' }
+      ].map(k => `
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex items-center justify-between">
+          <div><p class="text-xs text-slate-400">${k.label}</p><p class="text-xl font-extrabold text-white mt-1">${k.val}</p></div>
+          <i data-lucide="${k.icon}" class="w-7 h-7 ${k.color}"></i>
+        </div>
+      `).join('');
+
+      const expSoon = master.tenants.filter(t => daysUntil(t.expiredAt) <= 7);
+      document.getElementById('saas-expiring-list').innerHTML = expSoon.length
+        ? expSoon.map(t => `
+          <div class="p-3 rounded-xl bg-slate-800/70 border border-slate-700 flex flex-wrap justify-between items-center gap-2 text-xs">
+            <div><p class="font-bold text-white">${escapeHtml(t.name)} (${escapeHtml(t.owner)})</p><p class="text-slate-400">Expired: ${escapeHtml(t.expiredAt)}</p></div>
+            <div class="flex items-center gap-2">
+              <span class="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 font-semibold">${formatRupiah(t.price)}</span>
+              <button type="button" data-st-extend="${t.id}" class="btn-st-extend px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-semibold">+1 Bln</button>
+              ${t.wa ? `<a href="https://wa.me/${t.wa.replace(/\D/g,'')}?text=${encodeURIComponent(`Halo *${t.owner}*, masa sewa sistem *${t.name}* berakhir pada *${t.expiredAt}* (${formatRupiah(t.price)}).`)}" target="_blank" class="px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-semibold">WA Tagih</a>` : ''}
+            </div>
+          </div>
+        `).join('')
+        : '<p class="text-xs text-slate-500">Semua penyewa masih memiliki masa aktif panjang.</p>';
+
+      document.getElementById('saas-tenants-tbody').innerHTML = master.tenants.map(t => `
+        <tr class="hover:bg-slate-800/50">
+          <td class="py-3 px-3"><p class="font-bold text-white">${escapeHtml(t.name)}</p><p class="text-[11px] text-slate-400">${escapeHtml(t.owner)} • ${escapeHtml(t.wa || '-')}</p></td>
+          <td class="py-3 px-3"><p class="font-semibold text-indigo-300">${escapeHtml(t.plan)}</p><p class="text-[11px] text-slate-400">${formatRupiah(t.price)}/bln</p></td>
+          <td class="py-3 px-3 font-mono">${escapeHtml(t.expiredAt)}</td>
+          <td class="py-3 px-3 text-right">
+            <div class="inline-flex gap-1.5">
+              <button type="button" data-st-extend="${t.id}" class="btn-st-extend px-2 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 font-semibold">+1 Bln</button>
+              <button type="button" data-st-toggle="${t.id}" class="btn-st-toggle px-2.5 py-1 rounded-lg font-semibold ${t.active ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'}">${t.active ? 'Aktif' : 'Terkunci'}</button>
+              <button type="button" data-st-del="${t.id}" class="btn-st-del px-2 py-1 rounded-lg bg-rose-600/20 text-rose-400">Hapus</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+
+      document.querySelectorAll('.btn-st-extend').forEach(b => b.addEventListener('click', () => {
+        const t = master.tenants.find(x => x.id === b.dataset.stExtend);
+        if (t) { t.expiredAt = addMonths(t.expiredAt, 1); t.active = true; saveMaster(); renderSaasViews(); showToast(`Masa aktif ${t.name} diperpanjang s.d ${t.expiredAt}!`, 'success'); }
+      }));
+      document.querySelectorAll('.btn-st-toggle').forEach(b => b.addEventListener('click', () => {
+        const t = master.tenants.find(x => x.id === b.dataset.stToggle);
+        if (t) { t.active = !t.active; saveMaster(); renderSaasViews(); showToast(`Akses ${t.name} ${t.active ? 'dibuka' : 'dikunci'}!`, 'info'); }
+      }));
+      document.querySelectorAll('.btn-st-del').forEach(b => b.addEventListener('click', () => {
+        master.tenants = master.tenants.filter(x => x.id !== b.dataset.stDel);
+        saveMaster(); renderSaasViews(); showToast('Penyewa dihapus.', 'warning');
+      }));
+
+      document.getElementById('su-tenant').innerHTML = master.tenants.map(t => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('');
+      document.getElementById('saas-users-list').innerHTML = master.users.map(u => `
+        <div class="p-2.5 rounded-xl bg-slate-800 border border-slate-700 flex justify-between items-center text-xs">
+          <div><p class="font-bold text-white">${escapeHtml(u.fullName)}</p><p class="text-[11px] text-slate-400">${escapeHtml(u.username)} • ${escapeHtml(u.projectId)}</p></div>
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 text-[10px] font-bold">${escapeHtml(u.role)}</span>
+            <button type="button" data-su-del="${u.id}" class="btn-su-del text-rose-400 text-[11px]">Hapus</button>
+          </div>
+        </div>
+      `).join('');
+      document.querySelectorAll('.btn-su-del').forEach(b => b.addEventListener('click', () => {
+        master.users = master.users.filter(x => x.id !== b.dataset.suDel);
+        saveMaster(); renderSaasViews(); showToast('Akun dihapus.', 'warning');
+      }));
+
+      document.getElementById('sm-brand').value = master.platformName;
+      document.getElementById('sm-tg-token').value = master.tgToken || '';
+      document.getElementById('sm-tg-chat').value = master.tgChatId || '';
+      if (window.lucide) lucide.createIcons();
+    }
+
+    document.getElementById('owner-login-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const u = document.getElementById('ol-user').value.trim().toLowerCase();
+      const p = document.getElementById('ol-pass').value;
+      if (u === 'superadmin' && p === (master.ownerPass || 'admin123')) {
+        isOwnerLoggedIn = true;
+        document.getElementById('owner-login-view').classList.add('hidden');
+        document.getElementById('owner-shell').classList.remove('hidden');
+        document.getElementById('st-exp').value = addMonths(new Date().toISOString().split('T')[0], 1);
+        renderSaasViews();
+        showToast('Selamat datang di Owner Command Center!', 'success');
+      } else {
+        showToast('Username atau password Owner salah!', 'error');
+      }
+    });
+
+    document.getElementById('btn-owner-logout').addEventListener('click', () => {
+      isOwnerLoggedIn = false;
+      document.getElementById('owner-shell').classList.add('hidden');
+      document.getElementById('owner-login-view').classList.remove('hidden');
+    });
+
+    document.querySelectorAll('.saas-nav-btn').forEach(b => b.addEventListener('click', () => switchSaasTab(b.dataset.saasTab)));
+
+    document.getElementById('saas-tenant-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const t = {
+        id: 'PRJ-' + String(master.tenants.length + 1).padStart(2, '0'),
+        name: document.getElementById('st-name').value.trim(),
+        owner: document.getElementById('st-owner').value.trim(),
+        wa: document.getElementById('st-wa').value.trim(),
+        plan: document.getElementById('st-plan').value,
+        price: Number(document.getElementById('st-price').value),
+        expiredAt: document.getElementById('st-exp').value,
+        active: true, rekening: '', portalUrl: 'cek-tagihan.html',
+        tgToken: '', tgChatId: '', tgNotifyNew: true, tgNotifyPay: true, tgNotifyTicket: true
+      };
+      master.tenants.push(t); saveMaster(); e.target.reset(); renderSaasViews();
+      showToast(`Penyewa ${t.name} ditambahkan!`, 'success');
+    });
+
+    document.getElementById('saas-user-form').addEventListener('submit', e => {
+      e.preventDefault();
+      master.users.push({
+        id: 'USR-' + Date.now(),
+        username: document.getElementById('su-username').value.trim(),
+        pass: document.getElementById('su-pass').value.trim(),
+        fullName: document.getElementById('su-fullname').value.trim(),
+        role: document.getElementById('su-role').value,
+        projectId: document.getElementById('su-tenant').value
+      });
+      saveMaster(); e.target.reset(); renderSaasViews(); showToast('Akun klien dibuat!', 'success');
+    });
+
+    document.getElementById('saas-master-form').addEventListener('submit', e => {
+      e.preventDefault();
+      master.platformName = document.getElementById('sm-brand').value.trim() || 'NetBill Pro Platform';
+      master.tgToken = document.getElementById('sm-tg-token').value.trim();
+      master.tgChatId = document.getElementById('sm-tg-chat').value.trim();
+      saveMaster(); renderSaasViews();
+      showToast('Pengaturan Owner disimpan!', 'success');
+    });
+
+    document.getElementById('btn-test-tg-master').addEventListener('click', async () => {
+      const token = document.getElementById('sm-tg-token').value.trim();
+      const chat = document.getElementById('sm-tg-chat').value.trim();
+      if (!token || !chat) return showToast('Isi Bot Token & Chat ID dulu.', 'warning');
+      try {
+        const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: chat, text: '✅ Tes Notifikasi Owner Panel NetBill Pro berhasil!' })
+        });
+        if (res.ok) showToast('Pesan tes terkirim ke Telegram!', 'success');
+        else showToast('Gagal kirim ke Telegram. Cek Token/Chat ID.', 'error');
+      } catch (err) { showToast('Gagal terhubung ke Telegram.', 'error'); }
+    });
+
+    document.getElementById('btn-export-master').addEventListener('click', () => {
+      const blob = new Blob([JSON.stringify(master, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `netbill-master-backup-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      showToast('Backup Master JSON diunduh!', 'success');
+    });
+
+    document.getElementById('input-restore-master').addEventListener('change', e => {
+      const f = e.target.files[0]; if (!f) return;
+      const r = new FileReader();
+      r.onload = ev => {
+        try {
+          const parsed = JSON.parse(ev.target.result);
+          if (parsed && Array.isArray(parsed.tenants) && Array.isArray(parsed.users)) {
+            master = { ...defaultMaster, ...parsed };
+            saveMaster(); renderSaasViews();
+            showToast('Data Master berhasil di-restore!', 'success');
+          } else showToast('Format JSON tidak valid.', 'error');
+        } catch (err) { showToast('Gagal membaca file JSON.', 'error'); }
+      };
+      r.readAsText(f);
+    });
+
+    if (window.lucide) lucide.createIcons();
+  </script>
+</body>
+</html>

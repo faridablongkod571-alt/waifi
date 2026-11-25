@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Layanan Terisolir — Pembayaran Tagihan WiFi</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: radial-gradient(circle at top left, #4c1d95 0%, #0f172a 55%, #020617 100%);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 py-8">
+  <div class="max-w-lg w-full bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100">
+    <div class="bg-gradient-to-r from-rose-600 to-rose-700 p-6 text-white text-center">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/15 backdrop-blur-sm text-white mb-2">
+        <i data-lucide="wifi-off" class="w-8 h-8"></i>
+      </div>
+      <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight">Layanan Internet Terisolir</h1>
+      <p id="isolir-brand-sub" class="text-xs text-rose-100 mt-1">Akses sementara dinonaktifkan karena melewati jatuh tempo</p>
+    </div>
+
+    <div class="p-6 sm:p-7 space-y-5">
+      <p class="text-xs sm:text-sm text-slate-600 text-center leading-relaxed">
+        Silakan cek nominal tagihan Anda di bawah ini, lakukan pembayaran, lalu kirim bukti transfer ke WhatsApp Admin agar koneksi segera diaktifkan kembali.
+      </p>
+
+      <form id="cek-tagihan-form" class="flex gap-2">
+        <input id="cek-query" type="text" required placeholder="ID Pelanggan / No. WA / Nama" class="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+        <button type="submit" class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold shrink-0 transition">
+          Cek Tagihan
+        </button>
+      </form>
+
+      <div id="hasil-tagihan" class="hidden rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-2.5 text-xs">
+        <div class="flex justify-between items-center border-b border-slate-200 pb-2">
+          <span class="font-bold text-slate-900 text-sm" id="res-nama">-</span>
+          <span id="res-status" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700">TERISOLIR</span>
+        </div>
+        <div class="flex justify-between"><span class="text-slate-500">Paket Layanan</span><span id="res-paket" class="font-semibold">-</span></div>
+        <div class="flex justify-between"><span class="text-slate-500">Jatuh Tempo</span><span id="res-jatuh-tempo" class="font-semibold text-rose-600">-</span></div>
+        <div class="flex justify-between pt-2 border-t border-slate-200 text-sm font-extrabold text-slate-900">
+          <span>Total Tagihan</span><span id="res-harga" class="text-rose-600">Rp 0</span>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-blue-100 bg-blue-50/70 p-4 space-y-2 text-xs">
+        <p class="font-bold text-blue-900">Metode Pembayaran (Transfer / E-Wallet):</p>
+        <p id="isolir-rekening-info" class="text-blue-800 leading-relaxed whitespace-pre-line">• Bank BRI / BCA: 1234-5678-9012 a.n. Admin Jaringan
+• DANA / OVO / QRIS: 0812-3456-7890</p>
+      </div>
+
+      <a id="btn-wa-konfirmasi" href="https://wa.me/6281234567890" target="_blank" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2 transition">
+        <i data-lucide="message-circle" class="w-4 h-4"></i>
+        Konfirmasi Pembayaran via WhatsApp
+      </a>
+    </div>
+  </div>
+
+  <script>
+    // ================= PENGATURAN MUDAH (UBAH DI SINI SAJA) =================
+    const NAMA_WIFI = 'NetBill WiFi';
+    const WA_ADMIN = '6281234567890'; // Awali dengan 628...
+    const INFO_REKENING = '• Bank BRI / BCA: 1234-5678-9012 a.n. Admin Jaringan\n• DANA / OVO / QRIS: 0812-3456-7890';
+    // =======================================================================
+
+    document.getElementById('isolir-brand-sub').textContent = `Layanan ${NAMA_WIFI} sementara dinonaktifkan karena melewati jatuh tempo`;
+    document.getElementById('isolir-rekening-info').textContent = INFO_REKENING;
+    document.getElementById('btn-wa-konfirmasi').href = `https://wa.me/${WA_ADMIN}?text=${encodeURIComponent(`Halo Admin ${NAMA_WIFI}, saya ingin konfirmasi pembayaran WiFi agar isolir dibuka.`)}`;
+
+    const demoBills = {
+      'cus-102': { id: 'CUS-102', nama: 'Ibu Dewi Lestari', paket: 'Paket Hemat 10M', kecepatan: '10 Mbps', harga: 150000, jatuhTempo: '2026-11-20', status: 'TERISOLIR' },
+      '6281234567802': { id: 'CUS-102', nama: 'Ibu Dewi Lestari', paket: 'Paket Hemat 10M', kecepatan: '10 Mbps', harga: 150000, jatuhTempo: '2026-11-20', status: 'TERISOLIR' }
+    };
+
+    document.getElementById('cek-tagihan-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const q = document.getElementById('cek-query').value.trim().toLowerCase();
+      const bill = demoBills[q] || null;
+      const box = document.getElementById('hasil-tagihan');
+      box.classList.remove('hidden');
+      if (!bill) {
+        document.getElementById('res-nama').textContent = 'Data tidak ditemukan';
+        document.getElementById('res-status').textContent = 'TIDAK ADA';
+        document.getElementById('res-paket').textContent = '-';
+        document.getElementById('res-jatuh-tempo').textContent = '-';
+        document.getElementById('res-harga').textContent = 'Rp 0';
+        return;
+      }
+
+      document.getElementById('res-nama').textContent = `${bill.nama} (${bill.id})`;
+      document.getElementById('res-status').textContent = bill.status;
+      document.getElementById('res-paket').textContent = `${bill.paket} (${bill.kecepatan})`;
+      document.getElementById('res-jatuh-tempo').textContent = bill.jatuhTempo;
+      document.getElementById('res-harga').textContent = 'Rp ' + Number(bill.harga).toLocaleString('id-ID');
+
+      const waMsg = encodeURIComponent(`Halo Admin ${NAMA_WIFI}, saya *${bill.nama}* (${bill.id}) ingin konfirmasi pembayaran tagihan WiFi sebesar *Rp ${Number(bill.harga).toLocaleString('id-ID')}*.`);
+      document.getElementById('btn-wa-konfirmasi').href = `https://wa.me/${WA_ADMIN}?text=${waMsg}`;
+    });
+
+    if (window.lucide) lucide.createIcons();
+  </script>
+</body>
+</html>
